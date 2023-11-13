@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
 
 # User
 #   Email
@@ -52,31 +53,72 @@ from django.contrib.auth.models import User
 #   Review
 #     Shelter
 #     Rating
+class newUser (AbstractUser):
+   name = models.CharField(max_length=30)
+   email = models.EmailField(unique=True)
+   phoneNumber = models.CharField(max_length=15, blank=True, null=True)
+   location = models.CharField(max_length=255)
+   picture = models.ImageField(upload_to='user_pictures/', blank=True, null=True)
+   password = models.CharField(max_length=100)
 
-class PetShelter (models.Model):
-   shelterName = models.CharField(max_length=30)
-   email = models.CharField(max_length=200)
-   address = models.CharField(max_length=200)
-   phoneNum = models.CharField(max_length=100)
-   userRating = models.IntegerField()
+class PetShelter (newUser):
+   missionStatement = models.TextField()
+   rating = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
    # petListing = 
-   # profilePic = 
 
-class PetSeeker (models.Model):
-   firstName = models.CharField(max_length=30)
-   lastName = models.CharField(max_length=30)
-   email = models.CharField(max_length=200)
-   password = models.CharField(max_length=200)
-   # profilePic = 
+class PetSeeker (newUser):
+   preference = models.CharField(max_length=200)
+
+class Photo (models.Model):
+   images = models.ImageField(upload_to='photo_folder/')
+
+class MorePhotos(models.Model):
+    # Other fields in your model
+    photos = models.ManyToManyField(Photo, blank=True)
+    # Other fields in your model
 
 class Pet (models.Model):
-   name = models.CharField(max_length=25)
+   name = models.CharField(max_length=30)
+   status = models.CharField(choices=[("Adopted", "Adopted"), ("Pending", "Pending"), ("Available", "Available"), ("Withdrawn", "Withdrawn")])
+   # note: profilePic = make pfp the first pic of the photos
+   photos = models.ForeignKey(MorePhotos)
+   shelter = models.ForeignKey(PetShelter)
    description = models.TextField(max_lenngth=2500)
-   characteristics = models.CharField(max_length=250)
-   health = models.CharField(max_length=250)
-   age = models.IntegerField()
+   behavior = models.CharField(max_length=2000)
+   medicalHistory = models.CharField(max_length=2000)
+   specialNeeds = models.CharField(max_length=2000)
+   age = models.IntegerField(max_length=3)
    breed = models.CharField(max_length=25)
    gender = models.CharField(max_length=25)
-   size = models.CharField()
+   size = models.CharField(max_length=2, choices=[("S", "S"), ("M", "M"),("L", "L"),("XL", "XL")])
    species = models.CharField(max_length=200)
    color = models.CharField(max_length=200)
+   timestamp = models.DateTimeField()
+   location = models.CharField(max_length=200)
+   fee = models.IntegerField()
+
+class Application (models.Model):
+   status = models.CharField(choices=[("Accepted", "Accepted"), ("Pending", "Pending"), ("Denied", "Denied")])
+   reason = models.CharField(max_length=2000)
+   seeker = models.ForeignKey(PetSeeker)
+   pet = models.ForeignKey(Pet)
+
+class Comment (models.Model):
+   content = models.CharField(max_length=2000)
+   timestamp = models.DateTimeField()
+   user = models.ForeignKey(newUser)
+
+class Chat (Comment):
+   application = models.ForeignKey(Application)
+
+class Review (Comment):
+   shelter = models.ForeignKey(PetShelter)
+   rating = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+
+
+class Notification (models.Model):
+   user = User
+   status = models.CharField(choices=[("Read", "Read"), ("Unread", "Unread")])
+   forward = models.ForeignKey(Pet, Application, Review)
+   timestamp = models.DateTimeField()
+   content = models.CharField(max_length=2000)
