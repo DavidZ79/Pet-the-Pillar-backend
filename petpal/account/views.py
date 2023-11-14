@@ -1,4 +1,5 @@
 from rest_framework.response import Response
+from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import generics, permissions
@@ -7,9 +8,10 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.serializers import ModelSerializer
 from rest_framework.authtoken.serializers import AuthTokenSerializer
-from .testmodel import newUser, PetShelter, PetSeeker
+from api.models import BaseUser, PetShelter, PetSeeker
 from .serializer import UserSerializer, PetSeekerSerializer, PetShelterSerializer
 from django.contrib.auth import authenticate
+from django.views.generic.edit import View
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -76,3 +78,9 @@ def login(request):
             return Response(data, status=status.HTTP_200_OK)
         else:
             return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+class TestView(View):
+    def get(self, request):
+
+        d = {"id": '1', "username": '2'}
+        return JsonResponse(d)
