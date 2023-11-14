@@ -117,7 +117,7 @@ class Pet (models.Model):
    status = models.CharField(max_length=10,choices=[("Adopted", "Adopted"), ("Pending", "Pending"), ("Available", "Available"), ("Withdrawn", "Withdrawn")])
    # note: profilePic = make pfp the first pic of the photos
    photos = models.ForeignKey(MorePhotos, null=True, on_delete=models.SET_NULL)
-   shelter = models.ForeignKey(PetShelter, on_delete=models.CASCADE)
+   # shelter = models.ForeignKey(PetShelter, on_delete=models.CASCADE)
    description = models.TextField(max_length=2500)
    behavior = models.CharField(max_length=2000)
    medicalHistory = models.CharField(max_length=2000)
@@ -166,4 +166,3 @@ class Review (Comment):
 
    shelter = models.ForeignKey(PetShelter, related_name="review_shelter", on_delete=models.CASCADE)
    rating = models.IntegerField(blank=True, null=True)
-
