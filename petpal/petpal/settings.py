@@ -48,6 +48,8 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = "api.BaseUser"
+LOGIN_REDIRECT_URL = '/admin/'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
