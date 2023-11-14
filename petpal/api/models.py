@@ -112,7 +112,7 @@ class Pet (models.Model):
    name = models.CharField(max_length=30)
    status = models.CharField(max_length=10,choices=[("Adopted", "Adopted"), ("Pending", "Pending"), ("Available", "Available"), ("Withdrawn", "Withdrawn")])
    # note: profilePic = make pfp the first pic of the photos
-   photos = models.ForeignKey(MorePhotos, on_delete=models.CASCADE)
+   photos = models.ForeignKey(MorePhotos, null=True, on_delete=models.SET_NULL)
    shelter = models.ForeignKey(PetShelter, on_delete=models.CASCADE)
    description = models.TextField(max_length=2500)
    behavior = models.CharField(max_length=2000)
@@ -133,6 +133,8 @@ class Application (models.Model):
    reason = models.CharField(max_length=2000)
    seeker = models.ForeignKey(PetSeeker, on_delete=models.CASCADE)
    pet = models.ForeignKey(Pet, on_delete=models.CASCADE)
+   creation_timestamp = models.DateTimeField(auto_now_add=True)
+   last_updated = models.DateTimeField(auto_now_add=True)
 
 class Comment (models.Model):
    content = models.CharField(max_length=2000)
@@ -147,5 +149,5 @@ class Chat (Comment):
 
 class Review (Comment):
    shelter = models.ForeignKey(PetShelter, related_name="review_shelter", on_delete=models.CASCADE)
-   rating = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+   rating = models.IntegerField(blank=True, null=True)
 
