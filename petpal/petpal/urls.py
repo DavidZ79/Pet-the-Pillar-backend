@@ -30,7 +30,7 @@ from comment import urls as comment_urls
 # APPLICATION
 # Create application (pet must be available)
 # Update applications
-# Get shelter application list (filter sort pagination)
+# Get shelter application list (filter sort pagination)  i.e. given a shelter, get all applications for all pets in that shelter
 # Get application
 
 # NOTIFICATIONS
