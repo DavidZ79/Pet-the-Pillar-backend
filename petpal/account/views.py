@@ -10,6 +10,7 @@ from rest_framework.serializers import ModelSerializer
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from api.models import BaseUser, PetShelter, PetSeeker
 from .serializer import UserSerializer, SeekerSerializer, ShelterSerializer
+from .serializer import UserSerializer, ShelterSerializer, SeekerSerializer
 from django.contrib.auth import authenticate
 from django.views.generic.edit import View
 
@@ -34,7 +35,7 @@ def registerUser(request):
 @permission_classes([AllowAny])
 def registerShelter(request):
    if request.method == 'POST':
-        serializer = PetShelterSerializer(data=request.data)
+        serializer = ShelterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
@@ -49,7 +50,7 @@ def registerShelter(request):
 @permission_classes([AllowAny])
 def registerSeeker(request):
     if request.method == 'POST':
-        serializer = PetSeekerSerializer(data=request.data)
+        serializer = SeekerSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
