@@ -5,6 +5,7 @@ from pet import urls as pet_urls
 from notification import urls as notification_urls
 from application import urls as application_urls
 from comment import urls as comment_urls
+from api import urls as api_urls
 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -35,7 +36,7 @@ from rest_framework_simplejwt.views import (
 # APPLICATION
 # Create application (pet must be available)
 # Update applications
-# Get shelter application list (filter sort pagination)  i.e. given a shelter, get all applications for all pets in that shelter
+# Get shelter application list (filter sort pagination)
 # Get application
 
 # NOTIFICATIONS
@@ -47,11 +48,13 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('account/', include(account_urls)),
-    path('pet/', include(pet_urls)),
-    path('comment/', include(comment_urls)),
-    path('application/', include(application_urls)),
-    path('notification/', include(notification_urls)),
+    # path('account/', include(account_urls)),
+    # path('pet/', include(pet_urls)),
+    # path('comment/', include(comment_urls)),
+    # path('application/', include(application_urls)),
+    # path('notification/', include(notification_urls)),
+
+    path('api/', include(api_urls)),
 
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

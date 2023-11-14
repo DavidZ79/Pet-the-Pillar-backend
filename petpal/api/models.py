@@ -42,11 +42,11 @@ from django.contrib.contenttypes.models import ContentType
 # Notifications
 #   User
 #   Status: Read, Unread
-#   Forward (Application, Pet, Review) 
+#   Forward (Application, Pet, Review, Chat) 
 #           Users should receive notifications for messages, status updates, and new pet listings (based on their preference).
 #           Shelters should receive notification for new reviews, new applications, and new messages from applicants.
 #   Timestamp
-#   Content
+#   ContentnewUser"
 # Comment
 #   Content
 #   Timestamp
@@ -56,42 +56,52 @@ from django.contrib.contenttypes.models import ContentType
 #   Review
 #     Shelter
 #     Rating
+
+class Notification (models.Model):
+   # user = models.ForeignKey(BaseUser, on_delete=models.CASCADE)
+   user_content_type = models.ForeignKey(ContentType, related_name="notification_user", on_delete=models.CASCADE)
+   user_object_id = models.PositiveBigIntegerField()
+   user = GenericForeignKey("user_content_type", "user_object_id")
+
+   status = models.CharField(max_length=10, choices=[("Read", "Read"), ("Unread", "Unread")])
+   
+   # forward = models.ForeignKey(Pet, Application, Review)
+   forward_content_type = models.ForeignKey(ContentType, related_name="notification_forward",on_delete=models.CASCADE)
+   forward_object_id = models.PositiveBigIntegerField()
+   forward = GenericForeignKey("forward_content_type", "forward_object_id")
+
+   timestamp = models.DateTimeField(auto_now_add=True)
+   content = models.CharField(max_length=2000)
+   
+   class Meta:
+        indexes = [
+            models.Index(fields=["forward_content_type", "forward_object_id"]),
+            models.Index(fields=["user_content_type", "user_object_id"]),
+        ]
+
 class BaseUser (AbstractUser):
    name = models.CharField(max_length=30)
    email = models.EmailField(unique=True)
    phoneNumber = models.CharField(max_length=15, blank=True, null=True)
    location = models.CharField(max_length=255)
-   picture = models.ImageField(upload_to='user_pictures/', blank=True, null=True)
+   picture = models.ImageField(upload_to="user_pictures/", blank=True, null=True)
    password = models.CharField(max_length=100)
-   groups = models.ManyToManyField(
-      'auth.Group',
-      verbose_name='groups',
-      blank=True,
-      help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
-      related_name="newuser_set",
-      related_query_name="newuser",
-    )
-   user_permissions = models.ManyToManyField(
-      'auth.Permission',
-      verbose_name='user permissions',
-      blank=True,
-      help_text='Specific permissions for this user.',
-      related_name="newuser_set",
-      related_query_name="newuser",
-    )
+   notifications = GenericRelation(Notification)
    
 
 class PetShelter (BaseUser):
-   # base = models.OneToOneField
+   # base = models.OneToOneField(BaseUser, related_name="pet_shelter", on_delete=models.CASCADE)
    missionStatement = models.TextField()
-   rating = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+   totalRating = models.IntegerField(blank=True, default=0)
+   numberOfRating = models.IntegerField(blank=True,default=0)
    # petListing = 
 
 class PetSeeker (BaseUser):
+   # base = models.OneToOneField(BaseUser, related_name="pet_seeker", on_delete=models.CASCADE)
    preference = models.CharField(max_length=200)
 
 class Photo (models.Model):
-   images = models.ImageField(upload_to='photo_folder/')
+   images = models.ImageField(upload_to="photo_folder/")
 
 class MorePhotos(models.Model):
     # Other fields in your model
@@ -102,7 +112,7 @@ class Pet (models.Model):
    name = models.CharField(max_length=30)
    status = models.CharField(max_length=10,choices=[("Adopted", "Adopted"), ("Pending", "Pending"), ("Available", "Available"), ("Withdrawn", "Withdrawn")])
    # note: profilePic = make pfp the first pic of the photos
-   photos = models.ForeignKey(MorePhotos, on_delete=models.CASCADE)
+   photos = models.ForeignKey(MorePhotos, null=True, on_delete=models.SET_NULL)
    shelter = models.ForeignKey(PetShelter, on_delete=models.CASCADE)
    description = models.TextField(max_length=2500)
    behavior = models.CharField(max_length=2000)
@@ -111,11 +121,11 @@ class Pet (models.Model):
    age = models.IntegerField()
    breed = models.CharField(max_length=25)
    gender = models.CharField(max_length=25)
-   size = models.CharField(max_length=2, choices=[("S", "S"), ("M", "M"),("L", "L"),("XL", "XL")])
-   species = models.CharField(max_length=200)
-   color = models.CharField(max_length=200)
+   size = models.IntegerField(choices=[(0, "Extra Small"),(1, "Small"), (2, "Medium"),(3, "Large"),(4, "Extra Large")])
+   species = models.CharField(max_length=50)
+   color = models.CharField(max_length=50)
    timestamp = models.DateTimeField(auto_now_add=True)
-   location = models.CharField(max_length=200)
+   location = models.CharField(max_length=50)
    fee = models.IntegerField()
 
 class Application (models.Model):
@@ -123,6 +133,8 @@ class Application (models.Model):
    reason = models.CharField(max_length=2000)
    seeker = models.ForeignKey(PetSeeker, on_delete=models.CASCADE)
    pet = models.ForeignKey(Pet, on_delete=models.CASCADE)
+   creation_timestamp = models.DateTimeField(auto_now_add=True)
+   last_updated = models.DateTimeField(auto_now_add=True)
 
 class Comment (models.Model):
    content = models.CharField(max_length=2000)
@@ -136,19 +148,6 @@ class Chat (Comment):
    application = models.ForeignKey(Application, on_delete=models.CASCADE)
 
 class Review (Comment):
-   # shelter = models.ForeignKey(PetShelter, on_delete=models.CASCADE)
-   rating = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+   shelter = models.ForeignKey(PetShelter, related_name="review_shelter", on_delete=models.CASCADE)
+   rating = models.IntegerField(blank=True, null=True)
 
-
-class Notification (models.Model):
-   user = models.ForeignKey(BaseUser, on_delete=models.CASCADE)
-
-   status = models.CharField(max_length=10, choices=[("Read", "Read"), ("Unread", "Unread")])
-   
-   # forward = models.ForeignKey(Pet, Application, Review)
-   content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-   object_id = models.PositiveBigIntegerField()
-   content_object = GenericForeignKey()
-
-   timestamp = models.DateTimeField(auto_now_add=True)
-   content = models.CharField(max_length=2000)
