@@ -5,6 +5,11 @@ from pet import urls as pet_urls
 from notification import urls as notification_urls
 from application import urls as application_urls
 from comment import urls as comment_urls
+
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 # Endpoints
 
 # Authentication for users with tokens
@@ -47,4 +52,7 @@ urlpatterns = [
     path('comment/', include(comment_urls)),
     path('application/', include(application_urls)),
     path('notification/', include(notification_urls)),
+
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
