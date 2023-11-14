@@ -1,6 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.serializers import ModelSerializer
+from rest_framework.authtoken.serializers import AuthTokenSerializer
+from api.models import BaseUser, PetShelter, PetSeeker
+from .serializer import UserSerializer, SeekerSerializer, ShelterSerializer
+from .serializer import UserSerializer, ShelterSerializer, SeekerSerializer
+from django.contrib.auth import authenticate
 from django.views.generic.edit import View
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
