@@ -7,6 +7,7 @@ from comment import urls as comment_urls
 from . import views
 
 app_name="api"
+
 urlpatterns = [
     path('account/', include(account_urls)),
     path('pet/', include(pet_urls)),

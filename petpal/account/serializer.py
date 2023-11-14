@@ -1,21 +1,23 @@
 from rest_framework import serializers
-import sys
-# sys.path.append("..api.models") 
-# from ..api.models import newUser, PetSeeker, PetShelter
 from api.models import BaseUser, PetSeeker, PetShelter
 
-class UserSerializer (serializers.ModelSerializer):
-   class Meta:
-      model = BaseUser
-      fields = ['id', 'email', 'name', 'phoneNumber', 'location', 'picture']
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BaseUser
+        fields = ['id', 'email', 'password', 'name', 'phoneNumber', 'location']
+        extra_kwargs = {'password': {'write_only': True}}
 
-class PetShelterSerializer(UserSerializer):
+    def create(self, validated_data):
+        user = BaseUser.objects.create_user(**validated_data)
+        return user
+    
+class ShelterSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
         model = PetShelter
-        fields = UserSerializer.Meta.fields + ['missionStatement', 'rating']
+        fields = '__all__'
+        
 
-class PetSeekerSerializer(UserSerializer):
+class SeekerSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
         model = PetSeeker
-        fields = UserSerializer.Meta.fields + ['preference']
-   
+        fields = '__all__'

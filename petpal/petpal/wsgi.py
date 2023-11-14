@@ -1,5 +1,5 @@
 """
-WSGI config for a2 project.
+WSGI config for petpal project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

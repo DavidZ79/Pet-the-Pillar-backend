@@ -3,6 +3,7 @@ from . import views
 from .views import registerUser, registerSeeker, registerShelter, login
 
 app_name="account"
+
 urlpatterns = [
     # path('api/login/', views.LoginView.as_view(), name='login'),
     path('login/', login, name='login'),
