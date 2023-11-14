@@ -1,84 +1,58 @@
-from rest_framework.response import Response
-from django.http import JsonResponse
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework import generics, permissions
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.serializers import ModelSerializer
-from rest_framework.authtoken.serializers import AuthTokenSerializer
-from api.models import BaseUser, PetShelter, PetSeeker
-from .serializer import UserSerializer, ShelterSerializer, SeekerSerializer
-from django.contrib.auth import authenticate
+from rest_framework import generics, status, permissions
+from rest_framework.response import Response
 from django.views.generic.edit import View
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.http import JsonResponse
+from django.contrib.auth import get_user_model
+from .serializer import ShelterSerializer, SeekerSerializer, UserSerializer, LoginSerializer
+from api.models import BaseUser, PetSeeker, PetShelter
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def registerUser(request):
-   if request.method == 'POST':
-      serializer = UserSerializer(data=request.data)
+class registerShelter(generics.CreateAPIView):
+    queryset = BaseUser.objects.all()
+    serializer_class = ShelterSerializer
+    permission_classes = [permissions.AllowAny]
 
-      if serializer.is_valid():
-         user = serializer.save()
+    def perform_create(self, serializer):
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        serializer.data['refresh_token'] = str(refresh)
+        serializer.data['access_token'] = str(refresh.access_token)
+        serializer.data['user_id'] = user.id
 
-         refresh = RefreshToken.for_user(user)
-         data = {
-               'refresh': str(refresh),
-               'access': str(refresh.access_token),
-         }
-         return Response(data, status=status.HTTP_201_CREATED)
-      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class registerSeeker(generics.CreateAPIView):
+    queryset = BaseUser.objects.all()
+    serializer_class = SeekerSerializer
+    permission_classes = [permissions.AllowAny]
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def registerShelter(request):
-   if request.method == 'POST':
-        serializer = ShelterSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            refresh = RefreshToken.for_user(user)
-            data = {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }
-            return Response(data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-   
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def registerSeeker(request):
-    if request.method == 'POST':
-        serializer = SeekerSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            refresh = RefreshToken.for_user(user)
-            data = {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }
-            return Response(data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        serializer.data['refresh_token'] = str(refresh)
+        serializer.data['access_token'] = str(refresh.access_token)
+        serializer.data['user_id'] = user.id
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def login(request):
-    if request.method == 'POST':
+class loginUser(generics.CreateAPIView):
+    serializer_class = LoginSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
         email = request.data.get('email')
         password = request.data.get('password')
 
-        user = authenticate(request, username=email, password=password)
+        user = get_user_model().objects.filter(email=email).first()
 
-        if user:
+        if user and user.check_password(password):
             refresh = RefreshToken.for_user(user)
             data = {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
+                'refresh_token': str(refresh),
+                'access_token': str(refresh.access_token),
+                'user_id': user.id
             }
-            return Response(data, status=status.HTTP_200_OK)
+            return Response(data)
         else:
-            return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-        
+            return Response({'error': 'Invalid credentials'}, status=400)
+    
 class TestView(View):
     def get(self, request):
 
