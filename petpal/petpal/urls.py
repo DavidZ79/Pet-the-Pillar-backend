@@ -1,10 +1,10 @@
 from django.urls import include, path
 from django.contrib import admin
-from account import urls as account_urls
-from pet import urls as pet_urls
-from notification import urls as notification_urls
-from application import urls as application_urls
-from comment import urls as comment_urls
+# from account import urls as account_urls
+# from pet import urls as pet_urls
+# from notification import urls as notification_urls
+# from application import urls as application_urls
+# from comment import urls as comment_urls
 from api import urls as api_urls
 from django.conf import settings
 from django.conf.urls.static import static
