@@ -2,16 +2,19 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from rest_framework import status, generics
-from api.models import Pet
+from api.models import Pet, Photo
 from .serializers import PetSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class ManagePetView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
     def post(self, request):
         serializer = PetSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            pet = serializer.save()
+            self.handle_photo_upload(request, pet)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -20,13 +23,20 @@ class ManagePetView(APIView):
         serializer = PetSerializer(pet, data=request.data, partial=True) 
         if serializer.is_valid():
             serializer.save()
+            self.handle_photo_upload(request, pet)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def delete(self, request, pet_id):
+    def delete(self, _, pet_id):
         pet = get_object_or_404(Pet, id=pet_id)
         pet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    def handle_photo_upload(self, request, pet):
+        photo_files = request.FILES.getlist('photos')
+        for photo_file in photo_files:
+            photo = Photo.objects.create(image=photo_file)  
+            pet.photos.add(photo)
     
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
