@@ -1,58 +1,39 @@
-from rest_framework import status, viewsets
-from rest_framework.generics import ListAPIView
-from rest_framework.response import Response
-from api.models import Application, Pet
-from rest_framework.views import APIView
-from .serializers import ApplicationSerializer
-from rest_framework.pagination import PageNumberPagination
+from rest_framework import permissions, filters
+from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView, ListAPIView
 from django.shortcuts import get_object_or_404
+from api.models import Application, PetShelter, Pet
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
+from .serializers import ApplicationSerializer
 
-class ApplicationCreateView(APIView):
 
-    def post(self, request):  # Create
+class ApplicationCreateView(CreateAPIView):
+    queryset = Application.objects.all()
+    serializer_class = ApplicationSerializer
 
-        # # see if there exists pet listings
-        # pet_listing_id = request.data.get('pet_listing_id')
-        # try:
-        #     pet_listing = Pet.objects.get(id=pet_listing_id, status='available')
-        # except Pet.DoesNotExist:
-        #     return Response({'error': 'Pet listing not available'}, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        pet_id = self.request.data.get('pet')
+        pet = get_object_or_404(Pet, id=pet_id)
+        if pet.status != 'Available':
+            print('Error: This pet is not available for adoption.')
+            raise serializer.ValidationError('This pet is not available for adoption.')
+        serializer.save(seeker=self.request.user)
 
-        # create application
-        serializer = ApplicationSerializer(data=request.data)
-        if serializer.is_valid():
+
+class ApplicationView(RetrieveAPIView, UpdateAPIView):
+    queryset = Application.objects.all()
+    serializer_class = ApplicationSerializer
+    lookup_field = 'id'
+
+    def perform_update(self, serializer):
+        application = self.get_object()
+        user = self.request.user
+        if 'status' in serializer.validated_data and len(serializer.validation_data) == 1:
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def patch(self, request, application_id):  # Update
-        application = Application.objects.get(pk=application_id)
-        new_status = request.data.get('status')
-
-        user = request.user
-        # user is a shelter
-        if self.request.user.shelter is not None:  # is user shelter?
-            if application.status == 'pending' and new_status in ['Accepted', 'Denied']:
-                application.status = new_status
-            else:
-                return Response({'error': 'Invalid status update'}, status=status.HTTP_400_BAD_REQUEST)
-        # user is a seeker
-        elif user.is_pet_seeker():  # TODO
-            if application.status in ['pending', 'accepted'] and new_status == 'withdrawn':
-                application.status = new_status
-            else:
-                return Response({'error': 'Invalid status update'}, status=status.HTTP_400_BAD_REQUEST)
-
         else:
-            return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
-
-        serializer = ApplicationSerializer(application, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            print("Error: you can only update the status of an application!")
+            raise serializer.ValidationError('You can only update the status of an application!')
 
 
 class ApplicationListView(ListAPIView):
@@ -73,6 +54,7 @@ class ApplicationListView(ListAPIView):
             # user is not seeker or shelter
             print("Error: user is not seeker or shelter")
             return Application.objects.none()
+
 
 class StandardResultsSetPagination(PageNumberPagination):  # thanks Yahya
     page_size = 10
