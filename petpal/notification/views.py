@@ -4,22 +4,51 @@ from django.http import Http404
 from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, RetrieveAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from api.models import Notification, PetSeeker, PetShelter
+from api.models import Notification, PetSeeker, PetShelter, Pet, Application, Review
 
 from .serializer import NotificationSerializer
 # Create your views here.
 
 class NotificationCreateAPI(CreateAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = [NotificationSerializer]
+    serializer_class = NotificationSerializer
     
     def perform_create(self, serializer):
-        notification = serializer.save()
+        print("GOT TO CREATE")
+        try:
+            user = PetSeeker.objects.get(pk=self.request.user)
+        except PetSeeker.DoesNotExist:
+            try:
+                user = PetShelter.objects.get(pk=self.request.user)
+            except PetSeeker.DoesNotExist:
+                raise Http404('Unknown User')
+        
+        try:
+            forward = Pet.objects.get(pk=self.request.user)
+        except Pet.DoesNotExist:
+            try:
+                forward = Application.objects.get(pk=self.request.user)
+            except Application.DoesNotExist:
+                raise Http404('Unknown User')
+        
+        notification = serializer.save(user=user, forward=forward)
         
 
 class NotificationAPI(RetrieveAPIView, UpdateAPIView, DestroyAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = [NotificationSerializer]
+    serializer_class = NotificationSerializer
+    lookup_field = 'id'
+    lookup_url_kwarg = 'notification_id'
+
+    def get_queryset(self):
+        try:
+            user = PetSeeker.objects.get(pk=self.request.user)
+        except PetSeeker.DoesNotExist:
+            try:
+                user = PetShelter.objects.get(pk=self.request.user)
+            except PetSeeker.DoesNotExist:
+                raise Http404('Unknown User')
+        return user.notifications.all()
 
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
@@ -33,14 +62,16 @@ class NotificationAPI(RetrieveAPIView, UpdateAPIView, DestroyAPIView):
 
 class NotificationListAPI(ListAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = NotificationSerializer
+    lookup_field = 'id'
+    lookup_url_kwarg = 'notification_id'
 
     def get_queryset(self):
         try:
-            user = PetSeeker.objects.get(pk=self.kwargs[self.request.user.id])
+            user = PetSeeker.objects.get(pk=self.request.user)
         except PetSeeker.DoesNotExist:
             try:
-                user = PetShelter.objects.get(pk=self.kwargs[self.request.user.id])
+                user = PetShelter.objects.get(pk=self.request.user)
             except PetSeeker.DoesNotExist:
                 raise Http404('Unknown User')
-
-        return Notification.objects.filter(user=user)
+        return user.notifications.all()
