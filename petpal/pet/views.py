@@ -19,6 +19,7 @@ class ManagePetView(APIView):
         
         pet_data = request.data.copy()
         pet_data.pop('shelter', None)
+        pet_data.pop('timestamp', None)
 
         serializer = PetSerializer(data=pet_data)
         if serializer.is_valid():
@@ -35,6 +36,7 @@ class ManagePetView(APIView):
         pet = get_object_or_404(Pet, id=pet_id)
         pet_data = request.data.copy()
         pet_data.pop('shelter', None)
+        pet_data.pop('timestamp', None)
         serializer = PetSerializer(pet, data=pet_data, partial=True) 
         if serializer.is_valid():
             serializer.save()
