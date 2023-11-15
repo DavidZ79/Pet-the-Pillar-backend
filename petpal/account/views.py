@@ -72,13 +72,14 @@ class SeekerProfileView (generics.RetrieveAPIView):
     queryset = PetShelter.objects.all()
     serializer_class = ShelterSerializer
     permission_classes = [permissions.IsAuthenticated]  
+    lookup_field = 'id'
     
     def retrieve(self, request, *args, **kwargs):
         seeker = self.get_object()
-        shelter_id = self.kwargs.get('shelter_id')
+        shelter_id = self.kwargs.get('id')
 
         # Check if the shelter has an active application with the seeker
-        active_application_exists = Application.objects.filter(seeker=seeker, status='Pending', pet__shelter_id=shelter_id).exists()
+        active_application_exists = Application.objects.filter(seeker=seeker, status='Pending', pk=shelter_id).exists()
 
         if active_application_exists:
             serializer = self.get_serializer(seeker)
@@ -90,6 +91,7 @@ class ShelterProfileView(generics.RetrieveAPIView):
     queryset = PetShelter.objects.all()
     serializer_class = ShelterSerializer
     permission_classes = [permissions.AllowAny]
+    lookup_field = 'id'
 
     def retrieve(self, request, *args, **kwargs):
         shelter = self.get_object()

@@ -13,8 +13,8 @@ urlpatterns = [
     path('login/', loginUser.as_view(), name='login'),
 
     path('all/shelter/', AllShelterListView.as_view(), name='shelterview'),
-    path('shelter/<int:pk>/', ShelterProfileView.as_view(), name='shelterprofile'),
-    path('seeker/<int:pk>/', SeekerProfileView.as_view(), name='seekerprofile'),
+    path('shelter/<int:id>/', ShelterProfileView.as_view(), name='shelterprofile'),
+    path('seeker/<int:id>/', SeekerProfileView.as_view(), name='seekerprofile'),
 
     path('test/', views.TestView.as_view(), name='testView'),
 
