@@ -5,6 +5,7 @@ from rest_framework import status, generics
 from api.models import Pet
 from .serializers import PetSerializer
 from django.shortcuts import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
 
 class ManagePetView(APIView):
     def post(self, request):
@@ -27,8 +28,12 @@ class ManagePetView(APIView):
         pet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    
 class SearchPetView(generics.ListAPIView):
     serializer_class = PetSerializer
+    pagination_class = StandardResultsSetPagination
     filter_backends = [OrderingFilter]
     ordering = ["name"]
     ordering_fields = ['name', 'age', 'size', 'species', 'status']
@@ -67,3 +72,4 @@ class SearchPetView(generics.ListAPIView):
             queryset = queryset.filter(age__gte=min_age, age__lte=max_age)
 
         return queryset
+    
