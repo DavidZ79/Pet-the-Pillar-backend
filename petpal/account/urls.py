@@ -17,8 +17,4 @@ urlpatterns = [
 
     
     path('all/shelter/', AllShelterListView.as_view(), name='shelterview'),
-    # remove this later
-    path('all/', views.AllListView.as_view(), name='allview'),
-    path('all/seeker/', views.AllSeekerListView.as_view(), name='seekerview'),
-
 ]
