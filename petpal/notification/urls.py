@@ -22,5 +22,5 @@ app_name = 'notification'
 urlpatterns = [
     path('', views.NotificationCreateAPI.as_view(), name="notification_create"),
     path('<int:notification_id>/', views.NotificationAPI.as_view(), name="notification_api"),
-    path('list/<int:user_id>/', views.NotificationListAPI.as_view(), name="notification_list"),
+    path('list/', views.NotificationListAPI.as_view(), name="notification_list"),
 ]

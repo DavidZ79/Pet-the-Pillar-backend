@@ -38,6 +38,7 @@ class ChatAPI(CreateAPIView):
 
         chat = serializer.save(user=user, application=application)
         application.last_updated = datetime.now
+        application.save()
 
         notification_content = f"New chat message in application {application_id}"
         receiver = application.pet.shelter if hasattr(user, 'petseeker') else application.seeker.user

@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from django.http import Http404
+from django.http import Http404, JsonResponse
 
 from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView, RetrieveAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -35,7 +35,7 @@ class NotificationCreateAPI(CreateAPIView):
         notification = serializer.save(user=user, forward=forward)
         
 
-class NotificationAPI(RetrieveAPIView, UpdateAPIView, DestroyAPIView):
+class NotificationAPI(RetrieveAPIView, DestroyAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = NotificationSerializer
     lookup_field = 'id'
@@ -51,17 +51,18 @@ class NotificationAPI(RetrieveAPIView, UpdateAPIView, DestroyAPIView):
                 raise Http404('Unknown User')
         return user.notifications.all()
 
-    def retrieve(self, request, *args, **kwargs):
-        print(request.__dict__)
-        # return self.get()
-        return super().retrieve(request, *args, **kwargs)
-
-    def perform_update(self, serializer):
-        print("UPDATE")
-        print(serializer)
-        serializer.status = 'Read'
-        serializer.save()
-        return super().perform_update(serializer)
+    def retrieve(self, request,**kwargs):
+        print(request.__dict__.keys())
+        print(kwargs)
+        try:
+            notification =  Notification.objects.get(pk=kwargs['notification_id'])
+        except Notification.DoesNotExist:
+            raise Http404('Bad notification Id')
+        # result = self.serializer_class
+        result = self.serializer_class(instance=notification)
+        notification.status = "Read" #Update notification
+        notification.save()
+        return JsonResponse(result.data)
     
     def perform_destroy(self, instance):
         return super().perform_destroy(instance)
@@ -80,4 +81,11 @@ class NotificationListAPI(ListAPIView):
                 user = PetShelter.objects.get(pk=self.request.user)
             except PetSeeker.DoesNotExist:
                 raise Http404('Unknown User')
-        return user.notifications.all()
+        status = self.request.query_params.get('status')
+        if status:
+            if status not in ['Unread', 'Read']:
+                raise Http404('Bad Notification Status')
+            else:
+                return user.notifications.all().filter(status=status)
+        else:
+            return user.notifications.all()
