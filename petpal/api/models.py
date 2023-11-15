@@ -89,7 +89,7 @@ class BaseUser (AbstractUser):
    location = models.CharField(max_length=255)
    picture = models.ImageField(upload_to="user_pictures/", blank=True, null=True)
    password = models.CharField(max_length=100)
-   notifications = GenericRelation(Notification)
+   notifications = GenericRelation(Notification, content_type_field="user_content_type", object_id_field="user_object_id")
    
    
 
