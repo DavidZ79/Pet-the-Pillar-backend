@@ -1,20 +1,29 @@
-from rest_framework.serializers import ModelSerializer, RelatedField, ValidationError
+from rest_framework.serializers import ModelSerializer, RelatedField, HyperlinkedRelatedField, ValidationError
 from django.http import Http404
+from rest_framework.reverse import reverse
 
-from api.models import Notification, Pet, Application, Review
+from api.models import Notification, Pet, Application, Review, Chat
 from api.serializers import UserRelatedField
 
-class NotificationForwardRelatedField(RelatedField):
+from pet.views import ManagePetView
+
+class NotificationForwardRelatedField(HyperlinkedRelatedField):
     queryset = Notification.objects.all() # XD?
+    view_name = "forward"
     
     def to_representation(self, value):
         print("REPRESENTING")
+        print(self.context)
         if isinstance(value, Pet):
-            return f'PetId:({value.id})'
+            return f'PetId({value.id})'
+            # return reverse('create-pet', request=self.context['request'])
+            # return reverse('notification_list', kwargs={'pk':value.id})
         elif isinstance(value, Application):
-            return f'ApplicationId:({value.id})'
+            return f'ApplicationId({value.id})'
         elif isinstance(value, Review):
-            return f'ReviewID:({value.id})'
+            return f'ReviewID({value.id})'
+        elif isinstance(value, Chat):
+            return f'ReviewID({value.id})'
         # try:
         #     user = Pet.objects.get(pk=value.id)
         #     return 'Seeker: ' + value.id
@@ -24,7 +33,7 @@ class NotificationForwardRelatedField(RelatedField):
         #         return 'Shelter: ' + value.id
         #     except Application.DoesNotExist:
         #         raise Exception('Unexpected user type')
-        raise Http404('Unknown Type of user')
+        raise Http404('Unknown object')
     
     def to_internal_value(self, data):
         print("VALIDATING?")
@@ -64,7 +73,7 @@ class NotificationSerializer(ModelSerializer):
         fields = ['id', 'user', 'status', 'forward', 'content', 'timestamp']
         extra_kwargs = {
             'timestamp': {'read_only': True},
-            'status': {'read_only': True},
+            'status': {'required': False},
             }
     
     def create(self, validated_data):

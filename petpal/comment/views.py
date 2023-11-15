@@ -26,7 +26,10 @@ class ChatAPI(CreateAPIView):
             except PetSeeker.DoesNotExist:
                 raise Http404('Unknown User')
         
-        application = get_object_or_404(Application, pk=self.kwargs['application_id'])
+        try:
+            application = Application.objects.get(pk=self.kwargs['application_id'])
+        except Application.DoesNotExist:
+            raise Http404('Invalid Access')
         # print("email?:" + str(self.request.user))
         # print("user id:" + str(user.id))
         # print("application:" + str(application.id))
