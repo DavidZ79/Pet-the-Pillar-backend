@@ -1,7 +1,7 @@
 from rest_framework.serializers import ModelSerializer
 
 from api.models import Comment, Chat, Review
-from api.serializer import UserRelatedField
+from api.serializers import UserRelatedField
 
 class CommentSerializer(ModelSerializer):
     user = UserRelatedField()

@@ -1,7 +1,7 @@
 from rest_framework.serializers import ModelSerializer, RelatedField
 
 from api.models import Notification, Pet, Application, Review
-from api.serializer import UserRelatedField
+from api.serializers import UserRelatedField
 
 class NotificationForwardRelatedField(RelatedField):
     queryset = Notification.objects.all()
