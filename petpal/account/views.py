@@ -74,33 +74,30 @@ class AllShelterListView(generics.ListAPIView):
 class SeekerProfileView (generics.RetrieveDestroyAPIView):
     queryset = PetSeeker.objects.all()
     serializer_class = SeekerSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
+
+    
+    def get_object(self):
+        seeker = super().get_object()
+        user = self.request.user
+
+        if user.pk == seeker.pk:
+            return seeker
+
+        if hasattr(user, 'petshelter') and \
+           Application.objects.filter(seeker=seeker, status='Pending', pet__shelter=user).exists():
+            return seeker
+
+        self.permission_denied(
+            self.request,
+            message="You do not have permission to view this profile."
+        )
 
     def retrieve(self, request, *args, **kwargs):
         seeker = self.get_object()
-
-        if not self.request.user.is_authenticated:
-            return Response({'error': 'Authentication required.'}, status=401)
-
-        user = self.request.user
-
-        if request.user.pk == seeker.pk:
-            serializer = self.get_serializer(seeker)
-            return Response(serializer.data)
-
-        if isinstance(user, PetShelter):
-            # Check if the shelter has an active application with the seeker
-            application_exists = Application.objects.filter(seeker=seeker, status='Pending', pet__shelter=user).exists()
-
-            if application_exists:
-                serializer = self.get_serializer(seeker)
-                return Response(serializer.data)
-            else:
-                return Response({'error': 'You do not have an active application with this seeker.'}, status=403)
-
-        
-        return Response({'error': 'You do not have permission to view this profile.'}, status=403)
+        serializer = self.get_serializer(seeker)
+        return Response(serializer.data)
 
 class ShelterProfileView(generics.RetrieveDestroyAPIView):
     queryset = PetShelter.objects.all()
@@ -110,39 +107,8 @@ class ShelterProfileView(generics.RetrieveDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         shelter = self.get_object()
-
-        if not self.request.user.is_authenticated:
-            serializer = self.get_serializer(shelter)
-            return Response(serializer.data)
-        
-        user = self.request.user
-        # pdb.set_trace()
-        if request.user.pk == shelter.pk:
-            serializer = self.get_serializer(shelter)
-            return Response(serializer.data)
-        
-        # if hasattr(user, 'petseeker'):
-        if isinstance(user, PetShelter):
-            application_exists = Application.objects.filter(seeker=user, status='Pending', pet__shelter=shelter).exists()
-
-            if application_exists:
-                serializer = self.get_serializer(shelter)
-                return Response(serializer.data)
-            else:
-                return Response({'error': 'You do not have an active application with this shelter.'}, status=403)
-
-        return Response({'error': 'You do not have permission to view this profile.'}, status=403)
-    
-    def destroyListing (self, request, *args, **kwargs):
-        pass
-
-    def destroyNoti(self, request, *args, **kwargs):
-        shelter = self.get_object()
-
-        notifications = Notification.objects.filter(user_content_type=ContentType.objects.get_for_model(shelter), user_object_id=shelter.id)
-        notifications.delete()
-
-        return Response({'message': 'Notification deleted successfully.'})
+        serializer = self.get_serializer(shelter)
+        return Response(serializer.data)
 
 class PetShelterUpdateView(generics.RetrieveUpdateAPIView):
     queryset = PetShelter.objects.all()
@@ -180,17 +146,11 @@ class PetSeekerUpdateView(generics.RetrieveUpdateAPIView):
         self.perform_update(serializer)
         return Response(serializer.data)
 
-class TestView(View):
-    def get(self, request):
-
-        d = {"id": '1', "username": '2'}
-        return JsonResponse(d)
-
+# remove this later
 class AllListView(generics.ListAPIView):
     queryset = BaseUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
-
 class AllSeekerListView(generics.ListAPIView):
     queryset = PetSeeker.objects.all()
     serializer_class = SeekerSerializer
