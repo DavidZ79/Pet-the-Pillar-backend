@@ -17,7 +17,6 @@ class ChatAPI(CreateAPIView):
     serializer_class = ChatSerializer
 
     def perform_create(self, serializer):
-        # print("REQUEST: ", self.request.user)
         try:
             user = PetSeeker.objects.get(pk=self.request.user)
         except PetSeeker.DoesNotExist:
@@ -27,18 +26,10 @@ class ChatAPI(CreateAPIView):
                 raise Http404('Unknown User')
         
         application = get_object_or_404(Application, pk=self.kwargs['application_id'])
-        # print("email?:" + str(self.request.user))
-        # print("user id:" + str(user.id))
-        # print("application:" + str(application.id))
-        # print("Seeker:" + str(application.seeker.id))
-        # print("shelter:" + str(application.pet.shelter.id))
-        print(self.get_serializer_context())        
         if application.seeker.id != user.id and application.pet.shelter.id != user.id:
             raise Http404('Invalid Access')
-
-        chat = serializer.save(user=user, application=application)
-        # print(chat.user_content_type)
-        # print(ContentType.objects.get_for_model(chat.user))
+        
+        serializer.save(user=user, application=application)
         application.last_updated = datetime.now
 
 class ReviewAPI(CreateAPIView):
