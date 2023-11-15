@@ -16,6 +16,7 @@ class ApplicationCreateView(CreateAPIView):
         pet_id = self.request.data.get('pet')
         pet = get_object_or_404(Pet, id=pet_id)
         if pet.status != 'Available':
+            print('Error: This pet is not available for adoption.')
             raise serializer.ValidationError('This pet is not available for adoption.')
         serializer.save(seeker=self.request.user)
 
