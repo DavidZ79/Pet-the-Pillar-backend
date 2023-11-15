@@ -20,6 +20,7 @@ class ManagePetView(APIView):
         pet_data = request.data.copy()
         pet_data.pop('shelter', None)
         pet_data.pop('timestamp', None)
+        pet_data['status'] = 'Available'
 
         serializer = PetSerializer(data=pet_data)
         if serializer.is_valid():
@@ -52,6 +53,11 @@ class ManagePetView(APIView):
         pet = get_object_or_404(Pet, id=pet_id)
         pet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    def get(self, _, pet_id):
+        pet = get_object_or_404(Pet, id=pet_id)
+        serializer = PetSerializer(pet)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     def handle_photo_upload(self, request, pet):
         photo_files = request.FILES.getlist('photos')

@@ -9,7 +9,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied
 
 from .serializer import ChatSerializer, ReviewSerializer
 
-from api.models import BaseUser, PetSeeker, PetShelter, Application, Chat, Review
+from api.models import BaseUser, PetSeeker, PetShelter, Application, Chat, Review, Notification
 
 from datetime import datetime
 # Create your views here.
@@ -35,15 +35,20 @@ class ChatAPI(CreateAPIView):
 
         if application.seeker.id != user.id and application.pet.shelter.id != user.id:
             raise PermissionDenied('Invalid Access')
-        
-        # print("email?:" + str(self.request.user))
-        # print("user id:" + str(user.id))
-        # print("application:" + str(application.id))
-        # print("Seeker:" + str(application.seeker.id))
-        # print("shelter:" + str(application.pet.shelter.id))
 
-        serializer.save(user=user, application=application)
+        chat = serializer.save(user=user, application=application)
         application.last_updated = datetime.now
+
+        notification_content = f"New chat message in application {application_id}"
+        receiver = application.pet.shelter if hasattr(user, 'petseeker') else application.seeker.user
+
+        Notification.objects.create(
+            user_content_type=ContentType.objects.get_for_model(receiver),
+            user_object_id=receiver.id,
+            content=notification_content,
+            forward_content_type=ContentType.objects.get_for_model(chat),
+            forward_object_id=chat.id
+        )
 
 class ReviewAPI(CreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -61,6 +66,15 @@ class ReviewAPI(CreateAPIView):
         # print(user.id)
         shelter = get_object_or_404(PetShelter, pk=self.kwargs['shelter_id'])
         review = serializer.save(user=user, shelter=shelter)
+
+        notification_content = f"A new review has been posted by {user.username}."
+        Notification.objects.create(
+            user_content_type=ContentType.objects.get_for_model(shelter),
+            user_object_id=shelter.id,
+            content=notification_content,
+            forward_content_type=ContentType.objects.get_for_model(review),
+            forward_object_id=review.id
+        )
 
 class ChatListAPI(ListAPIView):
     permission_classes = [IsAuthenticated]
