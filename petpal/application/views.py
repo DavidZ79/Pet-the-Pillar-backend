@@ -29,7 +29,11 @@ class ApplicationView(RetrieveAPIView, UpdateAPIView):
     def perform_update(self, serializer):
         application = self.get_object()
         user = self.request.user
-        serializer.save()
+        if 'status' in serializer.validated_data and len(serializer.validation_data) == 1:
+            serializer.save()
+        else:
+            print("Error: you can only update the status of an application!")
+            raise serializer.ValidationError('You can only update the status of an application!')
 
 
 class ApplicationListView(ListAPIView):
