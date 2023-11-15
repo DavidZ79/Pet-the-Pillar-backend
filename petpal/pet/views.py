@@ -16,24 +16,37 @@ class ManagePetView(APIView):
             return Response(
                 {"error": "You are not authorized to create a pet listing."},
                 status=status.HTTP_403_FORBIDDEN)
+        
+        pet_data = request.data.copy()
+        pet_data.pop('shelter', None)
 
-        serializer = PetSerializer(data=request.data)
+        serializer = PetSerializer(data=pet_data)
         if serializer.is_valid():
-            pet = serializer.save()
+            pet = serializer.save(shelter=request.user.petshelter)
             self.handle_photo_upload(request, pet)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def patch(self, request, pet_id):
+        if request.user.pk != Pet.objects.get(id=pet_id).shelter.pk:
+            return Response(
+                {"error": "You are not authorized to edit this pet listing."},
+                status=status.HTTP_403_FORBIDDEN)
         pet = get_object_or_404(Pet, id=pet_id)
-        serializer = PetSerializer(pet, data=request.data, partial=True) 
+        pet_data = request.data.copy()
+        pet_data.pop('shelter', None)
+        serializer = PetSerializer(pet, data=pet_data, partial=True) 
         if serializer.is_valid():
             serializer.save()
             self.handle_photo_upload(request, pet)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def delete(self, _, pet_id):
+    def delete(self, request, pet_id):
+        if request.user.pk != Pet.objects.get(id=pet_id).shelter.pk:
+            return Response(
+                {"error": "You are not authorized to edit this pet listing."},
+                status=status.HTTP_403_FORBIDDEN)
         pet = get_object_or_404(Pet, id=pet_id)
         pet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

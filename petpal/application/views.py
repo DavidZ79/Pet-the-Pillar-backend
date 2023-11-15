@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from .serializers import ApplicationSerializer
 from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 
 
 class ApplicationCreateView(APIView):
@@ -55,13 +56,23 @@ class ApplicationCreateView(APIView):
 
 
 class ApplicationListView(ListAPIView):
-    serializer = ApplicationSerializer
-    # permission_classes = [IsShelter]  # Custom permission class to check if user is a shelter
+    serializer_class = ApplicationSerializer
+    # filter_backends = [DjangoFilterBackend, filters.OrderingFilter] causes crashes
+    filterset_fields = ['status']
+    ordering_fields = ['timestamp', 'last_updated']
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        shelter = self.request.user.shelter
-        return Application.objects.filter(pet_listing__shelter=shelter).order_by('-created_at')
+        user = self.request.user
 
+        if hasattr(user, 'petshelter'):
+            return Application.objects.filter(pet__shelter=user.petshelter)
+        elif hasattr(user, 'petseeker'):
+            return Application.objects.filter(seeker=user.petseeker)
+        else:
+            # user is not seeker or shelter
+            print("Error: user is not seeker or shelter")
+            return Application.objects.none()
 
 class StandardResultsSetPagination(PageNumberPagination):  # thanks Yahya
     page_size = 10
