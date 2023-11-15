@@ -91,8 +91,9 @@ class BaseUser (AbstractUser):
    picture = models.ImageField(upload_to="user_pictures/", blank=True, null=True)
    password = models.CharField(max_length=100)
    notifications = GenericRelation(Notification, content_type_field="user_content_type", object_id_field="user_object_id")
-   
-   
+
+   def is_pet_shelter(self):
+      return hasattr(self, 'petshelter')
 
 class PetShelter (BaseUser):
    # base = models.OneToOneField(BaseUser, related_name="pet_shelter", on_delete=models.CASCADE)
@@ -106,27 +107,21 @@ class PetSeeker (BaseUser):
    preference = models.CharField(max_length=200)
 
 class Photo (models.Model):
-   images = models.ImageField(upload_to="photo_folder/")
-
-class MorePhotos(models.Model):
-    # Other fields in your model
-    photos = models.ManyToManyField(Photo, blank=True)
-    # Other fields in your model
+   image = models.ImageField(upload_to="photo_folder/")
 
 class Pet (models.Model):
    name = models.CharField(max_length=30)
    status = models.CharField(max_length=10,choices=[("Adopted", "Adopted"), ("Pending", "Pending"), ("Available", "Available"), ("Withdrawn", "Withdrawn")])
-   # note: profilePic = make pfp the first pic of the photos
-   photos = models.ForeignKey(MorePhotos, null=True, on_delete=models.SET_NULL)
+   photos = models.ManyToManyField(Photo, blank=True)
    shelter = models.ForeignKey(PetShelter, on_delete=models.CASCADE)
    description = models.TextField(max_length=2500)
    behavior = models.CharField(max_length=2000)
    medicalHistory = models.CharField(max_length=2000)
    specialNeeds = models.CharField(max_length=2000)
-   age = models.IntegerField()
+   age = models.PositiveIntegerField()
    breed = models.CharField(max_length=25)
    gender = models.CharField(max_length=25)
-   size = models.IntegerField(choices=[(0, "Extra Small"),(1, "Small"), (2, "Medium"),(3, "Large"),(4, "Extra Large")])
+   size = models.PositiveIntegerField(choices=[(0, "Extra Small"),(1, "Small"), (2, "Medium"),(3, "Large"),(4, "Extra Large")])
    species = models.CharField(max_length=50)
    color = models.CharField(max_length=50)
    timestamp = models.DateTimeField(auto_now_add=True)
@@ -150,7 +145,7 @@ class Comment (models.Model):
 
    # user = models.ForeignKey(BaseUser, on_delete=models.CASCADE)
    user_content_type = models.ForeignKey(ContentType, related_name="comment_user", on_delete=models.CASCADE)
-   user_object_id = models.PositiveBigIntegerField()
+   user_object_id = models.PositiveIntegerField()
    user = GenericForeignKey("user_content_type", "user_object_id")
 
    class Meta:

@@ -61,8 +61,6 @@ class ChatListAPI(ListAPIView):
         application = get_object_or_404(Application, pk=self.kwargs['application_id'])
         return Chat.objects.filter(application=application)
 
-    
-
 class ReviewListAPI(ListAPIView):
     permission_classes = [IsAuthenticated]
 

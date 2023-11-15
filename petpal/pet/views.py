@@ -2,16 +2,25 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from rest_framework import status, generics
-from api.models import Pet
+from api.models import Pet, Photo, BaseUser
 from .serializers import PetSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class ManagePetView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+    
     def post(self, request):
+        if not BaseUser.is_pet_shelter(request.user):
+            return Response(
+                {"error": "You are not authorized to create a pet listing."},
+                status=status.HTTP_403_FORBIDDEN)
+
         serializer = PetSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            pet = serializer.save()
+            self.handle_photo_upload(request, pet)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -20,23 +29,34 @@ class ManagePetView(APIView):
         serializer = PetSerializer(pet, data=request.data, partial=True) 
         if serializer.is_valid():
             serializer.save()
+            self.handle_photo_upload(request, pet)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def delete(self, request, pet_id):
+    def delete(self, _, pet_id):
         pet = get_object_or_404(Pet, id=pet_id)
         pet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
+    def handle_photo_upload(self, request, pet):
+        photo_files = request.FILES.getlist('photos')
+        for photo_file in photo_files:
+            photo = Photo.objects.create(image=photo_file)  
+            pet.photos.add(photo)
+    
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
+
+class ListPetView(generics.ListAPIView):
+    queryset = Pet.objects.all()
+    serializer_class = PetSerializer
     
 class SearchPetView(generics.ListAPIView):
     serializer_class = PetSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [OrderingFilter]
     ordering = ["name"]
-    ordering_fields = ['name', 'age', 'size', 'species', 'status']
+    ordering_fields = ['name', 'age', 'size', 'species', 'status', 'shelter__username']
 
     def get_queryset(self):
         
@@ -51,6 +71,7 @@ class SearchPetView(generics.ListAPIView):
         status = self.request.query_params.get('status')
         min_age = self.request.query_params.get('min_age')
         max_age = self.request.query_params.get('max_age')
+        shelter_username = self.request.query_params.get('shelter_username') 
 
         if name:
             queryset = queryset.filter(name__icontains=name)
@@ -68,8 +89,12 @@ class SearchPetView(generics.ListAPIView):
             queryset = queryset.filter(size__iexact=size)
         if status:
             queryset = queryset.filter(status__iexact=status)
+        else:
+            queryset = queryset.filter(status__iexact='Available')
         if min_age and max_age:
             queryset = queryset.filter(age__gte=min_age, age__lte=max_age)
+        if shelter_username:
+            queryset = queryset.filter(shelter__username__icontains=shelter_username) 
 
         return queryset
     
