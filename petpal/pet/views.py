@@ -36,7 +36,7 @@ class SearchPetView(generics.ListAPIView):
     pagination_class = StandardResultsSetPagination
     filter_backends = [OrderingFilter]
     ordering = ["name"]
-    ordering_fields = ['name', 'age', 'size', 'species', 'status']
+    ordering_fields = ['name', 'age', 'size', 'species', 'status', 'shelter__username']
 
     def get_queryset(self):
         
@@ -51,6 +51,7 @@ class SearchPetView(generics.ListAPIView):
         status = self.request.query_params.get('status')
         min_age = self.request.query_params.get('min_age')
         max_age = self.request.query_params.get('max_age')
+        shelter_username = self.request.query_params.get('shelter_username') 
 
         if name:
             queryset = queryset.filter(name__icontains=name)
@@ -70,6 +71,8 @@ class SearchPetView(generics.ListAPIView):
             queryset = queryset.filter(status__iexact=status)
         if min_age and max_age:
             queryset = queryset.filter(age__gte=min_age, age__lte=max_age)
+        if shelter_username:
+            queryset = queryset.filter(shelter__username__icontains=shelter_username) 
 
         return queryset
     
