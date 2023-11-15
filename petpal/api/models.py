@@ -91,9 +91,12 @@ class BaseUser (AbstractUser):
    picture = models.ImageField(upload_to="user_pictures/", blank=True, null=True)
    password = models.CharField(max_length=100)
    notifications = GenericRelation(Notification, content_type_field="user_content_type", object_id_field="user_object_id")
-
+   
    def is_pet_shelter(self):
       return hasattr(self, 'petshelter')
+   
+   class Meta:
+      ordering = ['pk']
 
 class PetShelter (BaseUser):
    # base = models.OneToOneField(BaseUser, related_name="pet_shelter", on_delete=models.CASCADE)
@@ -138,6 +141,7 @@ class Application (models.Model):
 
    class Meta:
       ordering = ['timestamp','last_updated']
+      unique_together = ('seeker', 'pet')
 
 class Comment (models.Model):
    content = models.CharField(max_length=2000)
