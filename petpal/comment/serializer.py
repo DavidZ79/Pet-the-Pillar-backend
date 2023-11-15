@@ -1,16 +1,15 @@
-from rest_framework.serializers import ModelSerializer, RelatedField
+from rest_framework.serializers import ModelSerializer
 
 from api.models import Comment, Chat, Review
-from api.serializers import UserRelatedField
-
-
+from api.serializer import UserRelatedField
 
 class CommentSerializer(ModelSerializer):
     user = UserRelatedField()
 
     class Meta:
         model = Comment
-        fields = ['id', 'content', 'timestamp', 'user']
+        fields = ['id', 'content', 'user']
+        extra_kwargs = {'timestamp': {'read_only': True}}
         
 class ChatSerializer(CommentSerializer):
     class Meta():

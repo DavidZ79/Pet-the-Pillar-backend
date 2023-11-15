@@ -46,7 +46,7 @@ from django.contrib.contenttypes.models import ContentType
 #           Users should receive notifications for messages, status updates, and new pet listings (based on their preference).
 #           Shelters should receive notification for new reviews, new applications, and new messages from applicants.
 #   Timestamp
-#   ContentnewUser"
+#   ContentnewUser
 # Comment
 #   Content
 #   Timestamp
@@ -63,7 +63,7 @@ class Notification (models.Model):
    user_object_id = models.PositiveBigIntegerField()
    user = GenericForeignKey("user_content_type", "user_object_id")
 
-   status = models.CharField(max_length=10, choices=[("Read", "Read"), ("Unread", "Unread")])
+   status = models.CharField(max_length=10, choices=[("Read", "Read"), ("Unread", "Unread")], default="Unread")
    
    # forward = models.ForeignKey(Pet, Application, Review)
    forward_content_type = models.ForeignKey(ContentType, related_name="forward",on_delete=models.CASCADE)
@@ -85,7 +85,7 @@ class BaseUser (AbstractUser):
    REQUIRED_FIELDS = ['username']
 
    username = models.CharField(max_length=30)
-   email = models.EmailField(blank=True, unique=True)
+   email = models.EmailField(unique=True)
    phoneNumber = models.CharField(max_length=15, blank=True, null=True)
    location = models.CharField(max_length=255)
    picture = models.ImageField(upload_to="user_pictures/", blank=True, null=True)

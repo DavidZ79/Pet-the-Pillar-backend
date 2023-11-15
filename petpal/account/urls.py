@@ -9,13 +9,15 @@ urlpatterns = [
     path('register/seeker/', registerSeeker.as_view(), name='seeker'),
     path('login/', loginUser.as_view(), name='login'),
 
-    path('all/shelter/', AllShelterListView.as_view(), name='shelterview'),
     path('shelter/<int:id>/', ShelterProfileView.as_view(), name='shelterprofile'),
     path('seeker/<int:id>/', SeekerProfileView.as_view(), name='seekerprofile'),
 
     path('shelter/<int:pk>/update/', PetShelterUpdateView.as_view(), name='shelterupdate'),
     path('seeker/<int:pk>/update/', PetSeekerUpdateView.as_view(), name='seekerupdate'),
 
+    path('all/', views.AllListView.as_view(), name='allview'),
+    path('all/shelter/', AllShelterListView.as_view(), name='shelterview'),
+    path('all/seeker/', views.AllSeekerListView.as_view(), name='seekerview'),
     path('test/', views.TestView.as_view(), name='testView'),
 
 ]

@@ -18,6 +18,7 @@ app_name="comment"
 #   Review
 #     Shelter
 #     Rating
+
 urlpatterns = [
     path('chat/<int:application_id>/', views.ChatAPI.as_view(), name="chat_application_create"),
     path('chat/<int:application_id>/list/', views.ChatListAPI.as_view(), name="chat_application_list"),

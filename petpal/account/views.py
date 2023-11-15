@@ -176,3 +176,13 @@ class TestView(View):
 
         d = {"id": '1', "username": '2'}
         return JsonResponse(d)
+
+class AllListView(generics.ListAPIView):
+    queryset = BaseUser.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]
+
+class AllSeekerListView(generics.ListAPIView):
+    queryset = PetSeeker.objects.all()
+    serializer_class = SeekerSerializer
+    permission_classes = [permissions.AllowAny]

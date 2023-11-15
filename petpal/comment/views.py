@@ -66,7 +66,6 @@ class ChatListAPI(ListAPIView):
 class ReviewListAPI(ListAPIView):
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):        
-
+    def get_queryset(self):
         shelter = get_object_or_404(PetShelter, pk=self.kwargs['shelter_id'])
         return Review.objects.filter(shelter=shelter)
