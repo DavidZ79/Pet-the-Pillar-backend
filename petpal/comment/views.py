@@ -4,6 +4,8 @@ from django.contrib.contenttypes.models import ContentType
 
 from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.exceptions import NotFound, PermissionDenied
 
 from .serializer import ChatSerializer, ReviewSerializer
 
@@ -24,10 +26,15 @@ class ChatAPI(CreateAPIView):
                 user = PetShelter.objects.get(pk=self.request.user)
             except PetSeeker.DoesNotExist:
                 raise Http404('Unknown User')
-        
-        application = get_object_or_404(Application, pk=self.kwargs['application_id'])
+
+        application_id = self.kwargs.get('application_id')
+        try:
+            application = Application.objects.get(pk=application_id)
+        except Application.DoesNotExist:
+            raise NotFound('Application not found.')
+
         if application.seeker.id != user.id and application.pet.shelter.id != user.id:
-            raise Http404('Invalid Access')
+            raise PermissionDenied('Invalid Access')
         
         serializer.save(user=user, application=application)
         application.last_updated = datetime.now
@@ -63,7 +70,14 @@ class ChatListAPI(ListAPIView):
                 raise Http404('Unknown User')
         
         
-        application = get_object_or_404(Application, pk=self.kwargs['application_id'])
+        application_id = self.kwargs.get('application_id')
+        try:
+            application = Application.objects.get(pk=application_id)
+        except Application.DoesNotExist:
+            raise NotFound('Application not found.')
+
+        if application.seeker.id != user.id and application.pet.shelter.id != user.id:
+            raise PermissionDenied('Invalid Access')
 
         if application.seeker.id != user.id and application.pet.shelter.id != user.id:
             raise Http404('Invalid Access')
