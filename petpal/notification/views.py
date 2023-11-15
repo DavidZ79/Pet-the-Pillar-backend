@@ -52,7 +52,8 @@ class NotificationAPI(RetrieveAPIView, UpdateAPIView, DestroyAPIView):
         return user.notifications.all()
 
     def retrieve(self, request, *args, **kwargs):
-        # print(request.__dict__)
+        print(request.__dict__)
+        # return self.get()
         return super().retrieve(request, *args, **kwargs)
 
     def perform_update(self, serializer):

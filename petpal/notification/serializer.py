@@ -23,7 +23,7 @@ class NotificationForwardRelatedField(HyperlinkedRelatedField):
         elif isinstance(value, Review):
             return f'ReviewID({value.id})'
         elif isinstance(value, Chat):
-            return f'ReviewID({value.id})'
+            return f'ChatID({value.id})'
         # try:
         #     user = Pet.objects.get(pk=value.id)
         #     return 'Seeker: ' + value.id
