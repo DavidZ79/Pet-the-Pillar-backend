@@ -12,12 +12,12 @@ class ApplicationCreateView(APIView):
 
     def post(self, request):  # Create
 
-        # see if there exists pet listings
-        pet_listing_id = request.data.get('pet_listing_id')
-        try:
-            pet_listing = Pet.objects.get(id=pet_listing_id, status='available')
-        except Pet.DoesNotExist:
-            return Response({'error': 'Pet listing not available'}, status=status.HTTP_400_BAD_REQUEST)
+        # # see if there exists pet listings
+        # pet_listing_id = request.data.get('pet_listing_id')
+        # try:
+        #     pet_listing = Pet.objects.get(id=pet_listing_id, status='available')
+        # except Pet.DoesNotExist:
+        #     return Response({'error': 'Pet listing not available'}, status=status.HTTP_400_BAD_REQUEST)
 
         # create application
         serializer = ApplicationSerializer(data=request.data)
