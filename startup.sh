@@ -41,11 +41,9 @@ python3 -m pip install --upgrade Pillow --no-binary :all:
 
 # migrations
 echo "MIGRATIONS"
+chmod +x petpal/manage.py
 python3 ./petpal/manage.py makemigrations
 python3 ./petpal/manage.py migrate
 
 
 echo "End of startup.sh"
-
-
-# If manage.py Permission denied, run this: chmod +x petpal/manage.py
