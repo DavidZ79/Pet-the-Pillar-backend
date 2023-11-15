@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from rest_framework import status, generics
-from api.models import Pet, Photo
+from api.models import Pet, Photo, BaseUser
 from .serializers import PetSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
@@ -10,7 +10,13 @@ from rest_framework.parsers import MultiPartParser, FormParser
 
 class ManagePetView(APIView):
     parser_classes = [MultiPartParser, FormParser]
+    
     def post(self, request):
+        if not BaseUser.is_pet_shelter(request.user):
+            return Response(
+                {"error": "You are not authorized to create a pet listing."},
+                status=status.HTTP_403_FORBIDDEN)
+
         serializer = PetSerializer(data=request.data)
         if serializer.is_valid():
             pet = serializer.save()
@@ -40,6 +46,10 @@ class ManagePetView(APIView):
     
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
+
+class ListPetView(generics.ListAPIView):
+    queryset = Pet.objects.all()
+    serializer_class = PetSerializer
     
 class SearchPetView(generics.ListAPIView):
     serializer_class = PetSerializer
@@ -79,6 +89,8 @@ class SearchPetView(generics.ListAPIView):
             queryset = queryset.filter(size__iexact=size)
         if status:
             queryset = queryset.filter(status__iexact=status)
+        else:
+            queryset = queryset.filter(status__iexact='Available')
         if min_age and max_age:
             queryset = queryset.filter(age__gte=min_age, age__lte=max_age)
         if shelter_username:
