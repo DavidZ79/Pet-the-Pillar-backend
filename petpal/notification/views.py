@@ -15,6 +15,7 @@ class NotificationCreateAPI(CreateAPIView):
     
     def perform_create(self, serializer):
         print("GOT TO CREATE")
+        print(self.request.data)
         try:
             user = PetSeeker.objects.get(pk=self.request.user)
         except PetSeeker.DoesNotExist:
@@ -24,7 +25,7 @@ class NotificationCreateAPI(CreateAPIView):
                 raise Http404('Unknown User')
         
         try:
-            forward = Pet.objects.get(pk=self.request.user)
+            forward = Pet.objects.get(pk=self.request.data['forward'])
         except Pet.DoesNotExist:
             try:
                 forward = Application.objects.get(pk=self.request.user)
@@ -51,10 +52,14 @@ class NotificationAPI(RetrieveAPIView, UpdateAPIView, DestroyAPIView):
         return user.notifications.all()
 
     def retrieve(self, request, *args, **kwargs):
+        # print(request.__dict__)
         return super().retrieve(request, *args, **kwargs)
 
     def perform_update(self, serializer):
+        print("UPDATE")
+        print(serializer)
         serializer.status = 'Read'
+        serializer.save()
         return super().perform_update(serializer)
     
     def perform_destroy(self, instance):
