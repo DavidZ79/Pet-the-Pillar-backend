@@ -36,6 +36,12 @@ class ChatAPI(CreateAPIView):
         if application.seeker.id != user.id and application.pet.shelter.id != user.id:
             raise PermissionDenied('Invalid Access')
         
+        # print("email?:" + str(self.request.user))
+        # print("user id:" + str(user.id))
+        # print("application:" + str(application.id))
+        # print("Seeker:" + str(application.seeker.id))
+        # print("shelter:" + str(application.pet.shelter.id))
+
         serializer.save(user=user, application=application)
         application.last_updated = datetime.now
 
