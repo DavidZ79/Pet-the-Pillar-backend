@@ -91,8 +91,6 @@ class BaseUser (AbstractUser):
    picture = models.ImageField(upload_to="user_pictures/", blank=True, null=True)
    password = models.CharField(max_length=100)
    notifications = GenericRelation(Notification, content_type_field="user_content_type", object_id_field="user_object_id")
-   
-   
 
 class PetShelter (BaseUser):
    # base = models.OneToOneField(BaseUser, related_name="pet_shelter", on_delete=models.CASCADE)
