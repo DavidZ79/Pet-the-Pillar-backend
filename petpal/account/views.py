@@ -12,6 +12,7 @@ from django.views.generic.edit import View
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
+import pdb
 
 from django.contrib.auth import get_user_model
 from .serializer import ShelterSerializer, SeekerSerializer, UserSerializer, LoginSerializer
@@ -73,38 +74,33 @@ class AllShelterListView(generics.ListAPIView):
 class SeekerProfileView (generics.RetrieveDestroyAPIView):
     queryset = PetSeeker.objects.all()
     serializer_class = SeekerSerializer
-    # permission_classes = [permissions.AllowAny]  
-    permission_classes = [permissions.IsAuthenticated]  
+    permission_classes = [permissions.AllowAny]
     lookup_field = 'id'
-    
+
     def retrieve(self, request, *args, **kwargs):
         seeker = self.get_object()
-        shelter_id = self.kwargs.get('id')
 
-        active_application_exists = Application.objects.filter(seeker=seeker, status='Pending', pk=shelter_id).exists()
+        if not self.request.user.is_authenticated:
+            return Response({'error': 'Authentication required.'}, status=401)
 
-        if active_application_exists:
+        user = self.request.user
+
+        if request.user.pk == seeker.pk:
             serializer = self.get_serializer(seeker)
             return Response(serializer.data)
-        else:
-            return Response({'error': 'Shelter does not have an active application with this seeker.'}, status=403)
-    
-    def destroyApp(self, request, *args, **kwargs):
-        seeker = self.get_object()
-        shelter_id = self.kwargs.get('id')
 
-        applications = Application.objects.filter(seeker=seeker, pet__shelter_id=shelter_id)
-        applications.delete()
+        if isinstance(user, PetShelter):
+            # Check if the shelter has an active application with the seeker
+            application_exists = Application.objects.filter(seeker=seeker, status='Pending', pet__shelter=user).exists()
 
-        return Response({'message': 'All applications for the seeker have been deleted.'})
+            if application_exists:
+                serializer = self.get_serializer(seeker)
+                return Response(serializer.data)
+            else:
+                return Response({'error': 'You do not have an active application with this seeker.'}, status=403)
 
-    def destroyNoti(self, request, *args, **kwargs):
-        seeker = self.get_object()
-
-        notifications = Notification.objects.filter(user_content_type=ContentType.objects.get_for_model(seeker), user_object_id=seeker.id)
-        notifications.delete()
-
-        return Response({'message': 'Notification deleted successfully.'})
+        
+        return Response({'error': 'You do not have permission to view this profile.'}, status=403)
 
 class ShelterProfileView(generics.RetrieveDestroyAPIView):
     queryset = PetShelter.objects.all()
@@ -118,14 +114,15 @@ class ShelterProfileView(generics.RetrieveDestroyAPIView):
         if not self.request.user.is_authenticated:
             serializer = self.get_serializer(shelter)
             return Response(serializer.data)
-
+        
         user = self.request.user
-
-        if isinstance(user, PetShelter) and user == shelter:
+        # pdb.set_trace()
+        if request.user.pk == shelter.pk:
             serializer = self.get_serializer(shelter)
             return Response(serializer.data)
-
-        if isinstance(user, PetSeeker):
+        
+        # if hasattr(user, 'petseeker'):
+        if isinstance(user, PetShelter):
             application_exists = Application.objects.filter(seeker=user, status='Pending', pet__shelter=shelter).exists()
 
             if application_exists:
@@ -134,7 +131,7 @@ class ShelterProfileView(generics.RetrieveDestroyAPIView):
             else:
                 return Response({'error': 'You do not have an active application with this shelter.'}, status=403)
 
-        return Response({'error': 'Access denied.'}, status=403)
+        return Response({'error': 'You do not have permission to view this profile.'}, status=403)
     
     def destroyListing (self, request, *args, **kwargs):
         pass
@@ -152,6 +149,12 @@ class PetShelterUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = ShelterSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_object(self):
+        obj = super().get_object()
+        if self.request.user.id != obj.id:
+            self.permission_denied(self.request)
+        return obj
+
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
@@ -163,6 +166,12 @@ class PetSeekerUpdateView(generics.RetrieveUpdateAPIView):
     queryset = PetSeeker.objects.all()
     serializer_class = SeekerSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        obj = super().get_object()
+        if self.request.user.id != obj.id:
+            self.permission_denied(self.request)
+        return obj
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
