@@ -133,12 +133,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),  
-    'REFRESH_TOKEN_LIFETIME': timedelta(hours=2), 
-}
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
