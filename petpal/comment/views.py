@@ -44,6 +44,7 @@ class ChatAPI(CreateAPIView):
 
         serializer.save(user=user, application=application)
         application.last_updated = datetime.now
+        application.save()
 
 class ReviewAPI(CreateAPIView):
     permission_classes = [IsAuthenticated]
