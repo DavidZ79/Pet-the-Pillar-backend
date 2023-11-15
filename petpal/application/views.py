@@ -1,7 +1,7 @@
 from rest_framework import status, viewsets
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
-from api.models import Application, Pet
+from api.models import Application, Pet, BaseUser
 from rest_framework.views import APIView
 from .serializers import ApplicationSerializer
 from rest_framework.pagination import PageNumberPagination
@@ -11,16 +11,20 @@ from rest_framework.permissions import IsAuthenticated
 
 class ApplicationCreateView(APIView):
 
-    def post(self, request):  # Create
+    def post(self, request):  
+        pet_id = request.data.get('pet')
+        pet = get_object_or_404(Pet, id=pet_id)
 
-        # # see if there exists pet listings
-        # pet_listing_id = request.data.get('pet_listing_id')
-        # try:
-        #     pet_listing = Pet.objects.get(id=pet_listing_id, status='available')
-        # except Pet.DoesNotExist:
-        #     return Response({'error': 'Pet listing not available'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # create application
+        if pet.status != 'Available':
+            return Response({'error': 'Pet is not available'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not BaseUser.is_pet_seeker(request.user):
+            return Response(
+                {"error": "You are not authorized to create a pet application."},
+                status=status.HTTP_403_FORBIDDEN)
+        
+        request.data['status'] = 'Pending'        
+        request.data['seeker'] = request.user.petseeker.pk
         serializer = ApplicationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -31,47 +35,53 @@ class ApplicationCreateView(APIView):
         application = Application.objects.get(pk=application_id)
         new_status = request.data.get('status')
 
-        user = request.user
-        # user is a shelter
-        if self.request.user.shelter is not None:  # is user shelter?
-            if application.status == 'pending' and new_status in ['Accepted', 'Denied']:
-                application.status = new_status
-            else:
-                return Response({'error': 'Invalid status update'}, status=status.HTTP_400_BAD_REQUEST)
-        # user is a seeker
-        elif user.is_pet_seeker():  # TODO
-            if application.status in ['pending', 'accepted'] and new_status == 'withdrawn':
-                application.status = new_status
-            else:
-                return Response({'error': 'Invalid status update'}, status=status.HTTP_400_BAD_REQUEST)
+        if not new_status:
+            return Response(
+                {"error": "No new status provided."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        else:
-            return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+        if hasattr(request.user, 'petseeker') and request.user.petseeker == application.seeker:
+            if application.status in ['Pending', 'Accepted'] and new_status == 'Withdrawn':
+                application.status = new_status
+                application.save(update_fields=['status'])
+                return Response({"status": new_status}, status=status.HTTP_200_OK)
 
-        serializer = ApplicationSerializer(application, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif hasattr(request.user, 'petshelter') and request.user.petshelter == application.pet.shelter:
+            if application.status == 'Pending' and new_status in ['Accepted', 'Denied']:
+                application.status = new_status
+                application.save(update_fields=['status'])
+                return Response({"status": new_status}, status=status.HTTP_200_OK)
+
+        return Response(
+            {"error": "Invalid status update request."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class ApplicationListView(ListAPIView):
     serializer_class = ApplicationSerializer
-    # filter_backends = [DjangoFilterBackend, filters.OrderingFilter] causes crashes
     filterset_fields = ['status']
     ordering_fields = ['timestamp', 'last_updated']
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
+        queryset = Application.objects.all()
+
+        status = self.request.query_params.get('status')
+        if status is not None:
+            queryset = queryset.filter(status=status)
+
+        ordering = self.request.query_params.get('ordering')
+        if ordering is not None:
+            queryset = queryset.order_by(ordering)
 
         if hasattr(user, 'petshelter'):
             return Application.objects.filter(pet__shelter=user.petshelter)
         elif hasattr(user, 'petseeker'):
             return Application.objects.filter(seeker=user.petseeker)
         else:
-            # user is not seeker or shelter
-            print("Error: user is not seeker or shelter")
             return Application.objects.none()
 
 class StandardResultsSetPagination(PageNumberPagination):  # thanks Yahya

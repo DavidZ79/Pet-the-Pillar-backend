@@ -94,6 +94,9 @@ class BaseUser (AbstractUser):
 
    def is_pet_shelter(self):
       return hasattr(self, 'petshelter')
+   
+   def is_pet_seeker(self):
+      return hasattr(self, 'petseeker')
 
 class PetShelter (BaseUser):
    # base = models.OneToOneField(BaseUser, related_name="pet_shelter", on_delete=models.CASCADE)
@@ -129,7 +132,7 @@ class Pet (models.Model):
    fee = models.IntegerField()
 
 class Application (models.Model):
-   status = models.CharField(max_length=10, choices=[("Accepted", "Accepted"), ("Pending", "Pending"), ("Denied", "Denied")])
+   status = models.CharField(max_length=10, choices=[("Accepted", "Accepted"), ("Pending", "Pending"), ("Denied", "Denied"), ("Withdrawn", "Withdrawn")])
    reason = models.CharField(max_length=2000)
    seeker = models.ForeignKey(PetSeeker, on_delete=models.CASCADE)
    pet = models.ForeignKey(Pet, on_delete=models.CASCADE)
