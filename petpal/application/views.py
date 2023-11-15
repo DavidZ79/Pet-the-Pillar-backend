@@ -1,12 +1,13 @@
-from rest_framework import status, viewsets
+from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
-from api.models import Application, Pet, BaseUser
+from api.models import Application, Pet, BaseUser, Notification
 from rest_framework.views import APIView
 from .serializers import ApplicationSerializer
 from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
+from django.contrib.contenttypes.models import ContentType
 
 
 class ApplicationCreateView(APIView):
@@ -27,11 +28,19 @@ class ApplicationCreateView(APIView):
         request.data['seeker'] = request.user.petseeker.pk
         serializer = ApplicationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            application = serializer.save()
+            notification_content = f"A new application has been created for {pet.name}."
+            Notification.objects.create(
+                user_content_type=ContentType.objects.get_for_model(pet.shelter),
+                user_object_id=pet.shelter.id,
+                content=notification_content,
+                forward_content_type=ContentType.objects.get_for_model(application),
+                forward_object_id=application.id
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def patch(self, request, application_id):  # Update
+    def patch(self, request, application_id): 
         application = Application.objects.get(pk=application_id)
         new_status = request.data.get('status')
 
@@ -45,17 +54,31 @@ class ApplicationCreateView(APIView):
             if application.status in ['Pending', 'Accepted'] and new_status == 'Withdrawn':
                 application.status = new_status
                 application.save(update_fields=['status'])
+                self.create_notification(application, new_status)
                 return Response({"status": new_status}, status=status.HTTP_200_OK)
 
         elif hasattr(request.user, 'petshelter') and request.user.petshelter == application.pet.shelter:
             if application.status == 'Pending' and new_status in ['Accepted', 'Denied']:
                 application.status = new_status
                 application.save(update_fields=['status'])
+                self.create_notification(application, new_status)
                 return Response({"status": new_status}, status=status.HTTP_200_OK)
 
         return Response(
             {"error": "Invalid status update request."},
             status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def create_notification(self, application, new_status):
+        notification_content = f"Application status updated to {new_status}"
+        receiver = application.seeker.user
+
+        Notification.objects.create(
+            user_content_type=ContentType.objects.get_for_model(receiver),
+            user_object_id=receiver.id,
+            content=notification_content,
+            forward_content_type=ContentType.objects.get_for_model(application),
+            forward_object_id=application.id
         )
 
 

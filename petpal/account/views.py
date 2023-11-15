@@ -145,13 +145,3 @@ class PetSeekerUpdateView(generics.RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
-
-# remove this later
-class AllListView(generics.ListAPIView):
-    queryset = BaseUser.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
-class AllSeekerListView(generics.ListAPIView):
-    queryset = PetSeeker.objects.all()
-    serializer_class = SeekerSerializer
-    permission_classes = [permissions.AllowAny]
