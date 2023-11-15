@@ -11,7 +11,6 @@ class CommentSerializer(ModelSerializer):
         fields = ['id', 'content', 'user', 'timestamp']
         extra_kwargs = {
             # 'user_object_id': {'read_only': True}, 
-            'user_content_type': {'read_only': True}, 
             # 'user': {'read_only': True},
             'timestamp': {'read_only': True}}
         
@@ -28,7 +27,7 @@ class ChatSerializer(CommentSerializer):
             }
 
     def create(self, validated_data):
-        print(validated_data)
+        # print(validated_data)
         return Chat.objects.create(**validated_data)
 
 class ReviewSerializer(CommentSerializer):
