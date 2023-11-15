@@ -12,6 +12,7 @@ class PetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pet
         fields = '__all__'
+        read_only_fields = ('shelter',)
 
     def create(self, validated_data):
         photos_data = validated_data.pop('photos', [])
