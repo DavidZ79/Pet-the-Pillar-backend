@@ -106,18 +106,12 @@ class PetSeeker (BaseUser):
    preference = models.CharField(max_length=200)
 
 class Photo (models.Model):
-   images = models.ImageField(upload_to="photo_folder/")
-
-class MorePhotos(models.Model):
-    # Other fields in your model
-    photos = models.ManyToManyField(Photo, blank=True)
-    # Other fields in your model
+   image = models.ImageField(upload_to="photo_folder/")
 
 class Pet (models.Model):
    name = models.CharField(max_length=30)
    status = models.CharField(max_length=10,choices=[("Adopted", "Adopted"), ("Pending", "Pending"), ("Available", "Available"), ("Withdrawn", "Withdrawn")])
-   # note: profilePic = make pfp the first pic of the photos
-   photos = models.ForeignKey(MorePhotos, null=True, on_delete=models.SET_NULL)
+   photos = models.ManyToManyField(Photo, blank=True)
    shelter = models.ForeignKey(PetShelter, on_delete=models.CASCADE)
    description = models.TextField(max_length=2500)
    behavior = models.CharField(max_length=2000)
