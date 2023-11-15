@@ -19,8 +19,8 @@ app_name="comment"
 #     Shelter
 #     Rating
 urlpatterns = [
-    path('chat/', views.ChatAPI.as_view()),
-    path('chat/list/', views.ChatListAPI.as_view()),
-    path('review/', views.ReviewAPI.as_view()),
-    path('review/list.', views.ReviewListAPI.as_view()),
+    path('chat/<int:application_id>/', views.ChatAPI.as_view(), name="chat_application_create"),
+    path('chat/<int:application_id>/list/', views.ChatListAPI.as_view(), name="chat_application_list"),
+    path('review/<int:shelter_id>/', views.ReviewAPI.as_view(), name="review_shelter_create"),
+    path('review/<int:shelter_id>/list/', views.ReviewListAPI.as_view(), name="review_shelter_list"),
 ]

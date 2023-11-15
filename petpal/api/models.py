@@ -74,6 +74,7 @@ class Notification (models.Model):
    content = models.CharField(max_length=2000)
    
    class Meta:
+        ordering = ['timestamp']
         indexes = [
             models.Index(fields=["forward_content_type", "forward_object_id"]),
             models.Index(fields=["user_content_type", "user_object_id"]),
@@ -89,7 +90,7 @@ class BaseUser (AbstractUser):
    location = models.CharField(max_length=255)
    picture = models.ImageField(upload_to="user_pictures/", blank=True, null=True)
    password = models.CharField(max_length=100)
-   notifications = GenericRelation(Notification)
+   notifications = GenericRelation(Notification, content_type_field="user_content_type", object_id_field="user_object_id")
    
    
 
@@ -137,9 +138,11 @@ class Application (models.Model):
    reason = models.CharField(max_length=2000)
    seeker = models.ForeignKey(PetSeeker, on_delete=models.CASCADE)
    pet = models.ForeignKey(Pet, on_delete=models.CASCADE)
-   creation_timestamp = models.DateTimeField(auto_now_add=True)
+   timestamp = models.DateTimeField(auto_now_add=True)
    last_updated = models.DateTimeField(auto_now_add=True)
-   reviews = GenericRelation('Review')
+
+   class Meta:
+      ordering = ['timestamp','last_updated']
 
 class Comment (models.Model):
    content = models.CharField(max_length=2000)
@@ -152,6 +155,7 @@ class Comment (models.Model):
 
    class Meta:
       abstract = True
+      ordering = ['-timestamp']
       indexes = [
          models.Index(fields=["user_content_type", "user_object_id"]),
       ]
