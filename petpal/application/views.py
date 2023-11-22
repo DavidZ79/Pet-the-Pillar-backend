@@ -71,7 +71,7 @@ class ApplicationCreateView(APIView):
     
     def create_notification(self, application, new_status):
         notification_content = f"Application status updated to {new_status}"
-        receiver = application.seeker.user
+        receiver = application.seeker
 
         Notification.objects.create(
             user_content_type=ContentType.objects.get_for_model(receiver),
