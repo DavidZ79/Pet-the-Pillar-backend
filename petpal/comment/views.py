@@ -40,7 +40,7 @@ class ChatAPI(CreateAPIView):
         application.last_updated = datetime.now
 
         notification_content = f"New chat message in application {application_id}"
-        receiver = application.pet.shelter if hasattr(user, 'petseeker') else application.seeker.user
+        receiver = application.pet.shelter if hasattr(user, 'petseeker') else application.seeker
 
         Notification.objects.create(
             user_content_type=ContentType.objects.get_for_model(receiver),
