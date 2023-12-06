@@ -24,4 +24,6 @@ urlpatterns = [
     path('chat/<int:application_id>/list/', views.ChatListAPI.as_view(), name="chat_application_list"),
     path('review/<int:shelter_id>/', views.ReviewAPI.as_view(), name="review_shelter_create"),
     path('review/<int:shelter_id>/list/', views.ReviewListAPI.as_view(), name="review_shelter_list"),
+    path('discussion/<int:blog_id>/', views.DiscussionAPI.as_view(), name="discussion_blog_create"),
+    path('discussion/<int:blog_id>/list/', views.DiscussionListAPI.as_view(), name="discussion_blog_list"),
 ]

@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 from django.contrib.contenttypes.models import ContentType
-from api.models import Comment, Chat, Review
+from api.models import Comment, Chat, Review, Discussion
 from api.serializers import UserRelatedField
 
 class CommentSerializer(ModelSerializer):
@@ -51,3 +51,15 @@ class ReviewSerializer(CommentSerializer):
     
     def create(self, validated_data):
         return Review.objects.create(**validated_data)
+    
+class DiscussionSerializer(CommentSerializer):
+    class Meta():
+        model = Discussion
+        fields = CommentSerializer.Meta.fields + ['blog']
+        extra_kwargs = {
+            # 'user_object_id': {'read_only': True}, 
+            # 'shelter': {'required':False}
+            }
+    
+    def create(self, validated_data):
+        return Discussion.objects.create(**validated_data)

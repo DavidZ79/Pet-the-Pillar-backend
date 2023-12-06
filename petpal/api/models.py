@@ -174,3 +174,16 @@ class Review (Comment):
 
    shelter = models.ForeignKey(PetShelter, related_name="review_shelter", on_delete=models.CASCADE)
    rating = models.IntegerField(blank=True, null=True)
+
+
+class Blog (models.Model):
+   shelter = models.ForeignKey(PetShelter, on_delete=models.CASCADE)
+   content = models.CharField(max_length=10000)
+   title = models.CharField(max_length=200)
+   likes = models.IntegerField(default=0)
+   timestamp = models.DateTimeField(auto_now_add=True)
+
+class Discussion (Comment):
+   user_content_type = models.ForeignKey(ContentType, related_name="blog_user", on_delete=models.CASCADE)
+
+   blog = models.ForeignKey(Blog, on_delete= models.CASCADE)
