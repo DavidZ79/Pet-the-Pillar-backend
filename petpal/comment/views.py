@@ -7,9 +7,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound, PermissionDenied
 
-from .serializer import ChatSerializer, ReviewSerializer
+from .serializer import ChatSerializer, ReviewSerializer, DiscussionSerializer
 
-from api.models import BaseUser, PetSeeker, PetShelter, Application, Chat, Review, Notification
+from api.models import BaseUser, PetSeeker, PetShelter, Application, Blog, Chat, Review, Notification
 
 from datetime import datetime
 # Create your views here.
@@ -77,6 +77,32 @@ class ReviewAPI(CreateAPIView):
             forward_object_id=review.id
         )
 
+class DiscussionAPI(CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = DiscussionSerializer
+
+    def perform_create(self, serializer):       
+        try:
+            user = PetSeeker.objects.get(pk=self.request.user)
+        except PetSeeker.DoesNotExist:
+            try:
+                user = PetShelter.objects.get(pk=self.request.user)
+            except PetSeeker.DoesNotExist:
+                raise Http404('Unknown Type of user')
+        # print(self.kwargs['shelter_id'])
+        # print(user.id)
+        blog = get_object_or_404(Blog, pk=self.kwargs['blog_id'])
+        discussion = serializer.save(user=user, blog=blog)
+
+        notification_content = f"A new discusion has been posted by {user.username} on {blog.title}."
+        Notification.objects.create(
+            user_content_type=ContentType.objects.get_for_model(blog.shelter),
+            user_object_id=blog.shelter.id,
+            content=notification_content,
+            forward_content_type=ContentType.objects.get_for_model(discussion),
+            forward_object_id=discussion.id
+        )
+
 class ChatListAPI(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ChatSerializer
@@ -108,6 +134,14 @@ class ChatListAPI(ListAPIView):
 class ReviewListAPI(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        shelter = get_object_or_404(PetShelter, pk=self.kwargs['shelter_id'])
+        return Review.objects.filter(shelter=shelter)
+
+class DiscussionListAPI(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = DiscussionSerializer
 
     def get_queryset(self):
         shelter = get_object_or_404(PetShelter, pk=self.kwargs['shelter_id'])
