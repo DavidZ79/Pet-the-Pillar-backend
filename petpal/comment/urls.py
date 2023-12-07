@@ -26,4 +26,6 @@ urlpatterns = [
     path('review/<int:shelter_id>/list/', views.ReviewListAPI.as_view(), name="review_shelter_list"),
     path('discussion/<int:blog_id>/', views.DiscussionAPI.as_view(), name="discussion_blog_create"),
     path('discussion/<int:blog_id>/list/', views.DiscussionListAPI.as_view(), name="discussion_blog_list"),
+    path('rating/<int:shelter_id>/', views.RatingAPI.as_view(), name="rating_api"),
+    path('likes/<int:blog_id>/', views.LikesAPI.as_view(), name="likes_api"),
 ]

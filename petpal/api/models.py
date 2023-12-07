@@ -67,7 +67,7 @@ class Notification (models.Model):
    
    # forward = models.ForeignKey(Pet, Application, Review)
    forward_content_type = models.ForeignKey(ContentType, related_name="forward",on_delete=models.CASCADE)
-   forward_object_id = models.PositiveBigIntegerField()
+   forward_object_id = models.PositiveIntegerField()
    forward = GenericForeignKey("forward_content_type", "forward_object_id")
 
    timestamp = models.DateTimeField(auto_now_add=True)
@@ -173,7 +173,6 @@ class Review (Comment):
    user_content_type = models.ForeignKey(ContentType, related_name="review_user", on_delete=models.CASCADE)
 
    shelter = models.ForeignKey(PetShelter, related_name="review_shelter", on_delete=models.CASCADE)
-   rating = models.IntegerField(blank=True, null=True)
 
 
 class Blog (models.Model):
@@ -187,3 +186,30 @@ class Discussion (Comment):
    user_content_type = models.ForeignKey(ContentType, related_name="blog_user", on_delete=models.CASCADE)
 
    blog = models.ForeignKey(Blog, on_delete= models.CASCADE)
+
+class Ratings (models.Model):
+   shelter = models.ForeignKey(PetShelter, on_delete=models.CASCADE)
+   rating = models.IntegerField(choices=((1,1),(2,2),(3,3),(4,4),(5,5)))
+
+   user_content_type = models.ForeignKey(ContentType, related_name="user", on_delete=models.CASCADE)
+   user_object_id = models.PositiveIntegerField()
+   user = GenericForeignKey("user_content_type", "user_object_id")
+
+   class Meta:
+        indexes = [
+            models.Index(fields=["user_content_type", "user_object_id"]),
+        ]
+        unique_together = ('shelter', 'user')
+
+class Likes (models.Model):
+   blog = models.ForeignKey(Blog, on_delete= models.CASCADE)
+
+   user_content_type = models.ForeignKey(ContentType, related_name="user", on_delete=models.CASCADE)
+   user_object_id = models.PositiveIntegerField()
+   user = GenericForeignKey("user_content_type", "user_object_id")
+
+   class Meta:
+        indexes = [
+            models.Index(fields=["user_content_type", "user_object_id"]),
+        ]
+        unique_together = ('blog', 'user')
