@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+
 # User
 #   Email
 #   Phone Number
@@ -67,7 +68,7 @@ class Notification (models.Model):
    
    # forward = models.ForeignKey(Pet, Application, Review)
    forward_content_type = models.ForeignKey(ContentType, related_name="forward",on_delete=models.CASCADE)
-   forward_object_id = models.PositiveBigIntegerField()
+   forward_object_id = models.PositiveIntegerField()
    forward = GenericForeignKey("forward_content_type", "forward_object_id")
 
    timestamp = models.DateTimeField(auto_now_add=True)
@@ -90,7 +91,10 @@ class BaseUser (AbstractUser):
    location = models.CharField(max_length=255)
    picture = models.ImageField(upload_to="user_pictures/", blank=True, null=True)
    password = models.CharField(max_length=100)
-   notifications = GenericRelation(Notification, content_type_field="user_content_type", object_id_field="user_object_id")
+
+   notifications = GenericRelation(Notification, content_type_field="user_content_type", object_id_field="user_object_id", related_query_name='notifications')
+   # ratings = GenericRelation(Ratings, content_type_field="user_content_type", object_id_field="user_object_id",related_query_name='ratings')
+   # likes = GenericRelation(Likes, content_type_field="user_content_type", object_id_field="user_object_id", related_query_name='likes')
    
    def is_pet_shelter(self):
       return hasattr(self, 'petshelter')
@@ -173,17 +177,44 @@ class Review (Comment):
    user_content_type = models.ForeignKey(ContentType, related_name="review_user", on_delete=models.CASCADE)
 
    shelter = models.ForeignKey(PetShelter, related_name="review_shelter", on_delete=models.CASCADE)
-   rating = models.IntegerField(blank=True, null=True)
 
 
 class Blog (models.Model):
    shelter = models.ForeignKey(PetShelter, on_delete=models.CASCADE)
    content = models.CharField(max_length=10000)
    title = models.CharField(max_length=200)
-   likes = models.IntegerField(default=0)
+   num_likes = models.IntegerField(default=0)
    timestamp = models.DateTimeField(auto_now_add=True)
+
+   class Meta:
+      ordering = ['-timestamp']
 
 class Discussion (Comment):
    user_content_type = models.ForeignKey(ContentType, related_name="blog_user", on_delete=models.CASCADE)
 
    blog = models.ForeignKey(Blog, on_delete= models.CASCADE)
+
+class Ratings (models.Model):
+   shelter = models.ForeignKey(PetShelter, on_delete=models.CASCADE)
+   rating = models.IntegerField(choices=((1,1),(2,2),(3,3),(4,4),(5,5)))
+
+   user_content_type = models.ForeignKey(ContentType, related_name="ratings_user", on_delete=models.CASCADE)
+   user_object_id = models.PositiveIntegerField()
+   user = GenericForeignKey("user_content_type", "user_object_id")
+
+   class Meta:
+        indexes = [
+            models.Index(fields=["user_content_type", "user_object_id"]),
+        ]
+
+class Likes (models.Model):
+   blog = models.ForeignKey(Blog, on_delete= models.CASCADE)
+
+   user_content_type = models.ForeignKey(ContentType, related_name="likes_user", on_delete=models.CASCADE)
+   user_object_id = models.PositiveIntegerField()
+   user = GenericForeignKey("user_content_type", "user_object_id")
+
+   class Meta:
+        indexes = [
+            models.Index(fields=["user_content_type", "user_object_id"]),
+        ]
