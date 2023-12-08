@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 from django.contrib.contenttypes.models import ContentType
-from api.models import Comment, Chat, Review, Discussion
+from api.models import Comment, Chat, Review, Discussion, Ratings, Likes
 from api.serializers import UserRelatedField
 
 class CommentSerializer(ModelSerializer):
@@ -43,7 +43,7 @@ class ChatSerializer(CommentSerializer):
 class ReviewSerializer(CommentSerializer):
     class Meta():
         model = Review
-        fields = CommentSerializer.Meta.fields + ['shelter', 'rating']
+        fields = CommentSerializer.Meta.fields + ['shelter']
         extra_kwargs = {
             # 'user_object_id': {'read_only': True}, 
             'shelter': {'required':False}
@@ -58,8 +58,61 @@ class DiscussionSerializer(CommentSerializer):
         fields = CommentSerializer.Meta.fields + ['blog']
         extra_kwargs = {
             # 'user_object_id': {'read_only': True}, 
-            # 'shelter': {'required':False}
+            'blog': {'required':False}
             }
     
     def create(self, validated_data):
         return Discussion.objects.create(**validated_data)
+
+class RatingsSerializer(ModelSerializer):
+    user = UserRelatedField()
+    partial = True
+
+    class Meta():
+        model = Ratings
+        fields = ['id', 'shelter', 'user', 'rating']
+        extra_kwargs = {
+            'shelter': {'required': False},
+            'id': {'read_only': True}
+        }
+
+    def create(self, validated_data):
+        # Get the content type for the user model
+        user_content_type = ContentType.objects.get_for_model(self.context['request'].user)
+
+        # Create the rating instance
+        rating = Ratings.objects.create(
+            shelter = validated_data['shelter'],
+            rating = validated_data['rating'],
+            user_content_type=user_content_type,
+            user_object_id=self.context['request'].user.pk,
+        )
+
+        return rating
+    
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        return instance
+
+class LikesSerializer(ModelSerializer):
+    user = UserRelatedField()
+
+    class Meta():
+        model = Likes
+        fields = ['blog', 'user']
+        extra_kwargs = {
+            'blog': {'required': False}
+        }
+    
+    def create(self, validated_data):
+        # Get the content type for the user model
+        user_content_type = ContentType.objects.get_for_model(self.context['request'].user)
+
+        # Create the rating instance
+        likes = Likes.objects.create(
+            blog = validated_data['blog'],
+            user_content_type=user_content_type,
+            user_object_id=self.context['request'].user.pk,
+        )
+
+        return likes
