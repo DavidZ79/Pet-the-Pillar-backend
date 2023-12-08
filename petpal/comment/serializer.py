@@ -58,7 +58,7 @@ class DiscussionSerializer(CommentSerializer):
         fields = CommentSerializer.Meta.fields + ['blog']
         extra_kwargs = {
             # 'user_object_id': {'read_only': True}, 
-            # 'shelter': {'required':False}
+            'blog': {'required':False}
             }
     
     def create(self, validated_data):
@@ -66,10 +66,15 @@ class DiscussionSerializer(CommentSerializer):
 
 class RatingsSerializer(ModelSerializer):
     user = UserRelatedField()
+    partial = True
 
     class Meta():
         model = Ratings
-        fields = ['shelter', 'user', 'rating']
+        fields = ['id', 'shelter', 'user', 'rating']
+        extra_kwargs = {
+            'shelter': {'required': False},
+            'id': {'read_only': True}
+        }
 
     def create(self, validated_data):
         # Get the content type for the user model
@@ -78,7 +83,7 @@ class RatingsSerializer(ModelSerializer):
         # Create the rating instance
         rating = Ratings.objects.create(
             shelter = validated_data['shelter'],
-            rating = validated_data['ratings'],
+            rating = validated_data['rating'],
             user_content_type=user_content_type,
             user_object_id=self.context['request'].user.pk,
         )
@@ -95,6 +100,9 @@ class LikesSerializer(ModelSerializer):
     class Meta():
         model = Likes
         fields = ['blog', 'user']
+        extra_kwargs = {
+            'blog': {'required': False}
+        }
     
     def create(self, validated_data):
         # Get the content type for the user model

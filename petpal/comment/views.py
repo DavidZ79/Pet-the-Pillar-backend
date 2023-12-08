@@ -149,10 +149,14 @@ class DiscussionListAPI(ListAPIView):
 class RatingAPI(CreateAPIView, RetrieveAPIView, UpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = RatingsSerializer
-    lookup_field = 'id'
+    lookup_field = 'shelter'
     lookup_url_kwarg = 'shelter_id'
 
+    def get_queryset(self):
+        return Ratings.objects.filter(user_object_id = self.request.user.id)
+
     def perform_create(self, serializer, **kwargs):
+        print("getting here")
         try:
             user = PetSeeker.objects.get(pk=self.request.user)
         except PetSeeker.DoesNotExist:
@@ -162,8 +166,14 @@ class RatingAPI(CreateAPIView, RetrieveAPIView, UpdateAPIView):
                 raise Http404('Unknown Type of user')
 
         shelter = get_object_or_404(PetShelter, pk=self.kwargs['shelter_id'])
-
+        
+        found = Ratings.objects.filter(user_object_id=user.id, shelter=shelter)
+            
+        if found:
+            raise PermissionDenied("Rating already exists")
+        
         rating = serializer.save(user=user, shelter=shelter)
+        print(rating)
         shelter.numberOfRating += 1
         shelter.totalRating += rating.rating
         shelter.save()
@@ -180,15 +190,16 @@ class RatingAPI(CreateAPIView, RetrieveAPIView, UpdateAPIView):
                 raise Http404('Unknown Type of user')
 
         shelter = get_object_or_404(PetShelter, pk=self.kwargs['shelter_id'])
-        try:
-            rating = Ratings.objects.get(user=self.request.user, shelter=shelter)
-        except Ratings.DoesNotExist:
-            raise Http404('Unknown Shelter or User')
-        # result = self.serializer_class
-        result = self.serializer_class(instance=rating)
+        
+        found = Ratings.objects.filter(user_object_id=user.id, shelter=shelter)
+        print(found)
+        print(Ratings.objects.all())
+        if not found:
+            raise PermissionDenied("Rating does not exist")
+        result = self.serializer_class(instance=found[0])
         return JsonResponse(result.data)
 
-    def perform_update(self, serializer, **kwargs):
+    def patch(self, request, **kwargs):
         try:
             user = PetSeeker.objects.get(pk=self.request.user)
         except PetSeeker.DoesNotExist:
@@ -196,26 +207,56 @@ class RatingAPI(CreateAPIView, RetrieveAPIView, UpdateAPIView):
                 user = PetShelter.objects.get(pk=self.request.user)
             except PetSeeker.DoesNotExist:
                 raise Http404('Unknown Type of user')
-
         shelter = get_object_or_404(PetShelter, pk=self.kwargs['shelter_id'])
-        try:
-            rating = Ratings.objects.get(user=self.request.user, shelter=shelter)
-        except Ratings.DoesNotExist:
-            raise Http404('Unknown Shelter or User')
+        found = Ratings.objects.filter(user_object_id=user.id, shelter=shelter)
+        print(found)
+        if not found:
+            raise PermissionDenied("Rating does not exist")
+        rating = found[0]
         original_rating = rating.rating
-        rating = serializer.update(instance=rating,rating=self.request.rating)
-        shelter.totalRating += rating.rating - original_rating
-        shelter.save()
+        serializer = self.serializer_class(instance=rating, data=request.data, partial=True)  # set partial=True to update a data partially
+        if found:
+            print(found[0].rating)
+        if serializer.is_valid():
+            serializer.save(user=user)
+            self.perform_update(serializer)
+            shelter.totalRating += int(request.data['rating']) - original_rating
+            shelter.save()
+            return JsonResponse(data=serializer.data)
+        return Http404("wrong parameters")
 
-class LikesAPI(CreateAPIView, DestroyAPIView):
+    # def perform_update(self, serializer):
+    #     try:
+    #         user = PetSeeker.objects.get(pk=self.request.user)
+    #     except PetSeeker.DoesNotExist:
+    #         try:
+    #             user = PetShelter.objects.get(pk=self.request.user)
+    #         except PetSeeker.DoesNotExist:
+    #             raise Http404('Unknown Type of user')
+    #     shelter = get_object_or_404(PetShelter, pk=self.kwargs['shelter_id'])
+    #     found = Ratings.objects.filter(user_object_id=user.id, shelter=shelter)
+    #     if not found:
+    #         raise PermissionDenied("Rating does not exist")
+    #     rating = found[0]
+    #     print(f"rating {serializer.validated_data['rating']}")
+    #     print(f"rating object {rating}")
+    #     original_rating = rating.rating
+    #     rating = serializer.save()
+    #     shelter.totalRating += rating.rating - original_rating
+    #     shelter.save()
+    
+
+class LikesAPI(CreateAPIView, RetrieveAPIView, DestroyAPIView):
     permissions_classes = [IsAuthenticated]
-    serialize_class = LikesSerializer
-    lookup_field = 'id'
+    serializer_class = LikesSerializer
+    lookup_field = 'blog'
     lookup_url_kwarg = 'blog_id'
 
+
+    def get_queryset(self):
+        return Likes.objects.all()
+
     def perform_create(self, serializer):
-        print("GOT TO CREATE")
-        print(self.request.data)
         try:
             user = PetSeeker.objects.get(pk=self.request.user)
         except PetSeeker.DoesNotExist:
@@ -226,7 +267,30 @@ class LikesAPI(CreateAPIView, DestroyAPIView):
         
         blog = get_object_or_404(Blog, pk=self.kwargs['blog_id'])
 
+        found = Likes.objects.filter(user_object_id=user.id, blog=blog)
+
+        if found:
+            raise PermissionDenied("Like already exists")
+        
         likes = serializer.save(user=user, blog=blog)
+
+    def retrieve(self, request,**kwargs):
+        try:
+            user = PetSeeker.objects.get(pk=self.request.user)
+        except PetSeeker.DoesNotExist:
+            try:
+                user = PetShelter.objects.get(pk=self.request.user)
+            except PetSeeker.DoesNotExist:
+                raise Http404('Unknown Type of user')
+
+        blog = get_object_or_404(Blog, pk=self.kwargs['blog_id'])
+        
+        found = Likes.objects.filter(user_object_id=user.id, blog=blog)
+
+        if not found:
+            raise PermissionDenied("Like does not exist")
+        result = self.serializer_class(instance=found[0])
+        return JsonResponse(result.data)
 
     def perform_destroy(self, instance):
         return super().perform_destroy(instance)
