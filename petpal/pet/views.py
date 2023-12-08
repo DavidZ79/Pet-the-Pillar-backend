@@ -36,6 +36,8 @@ class ManagePetView(APIView):
                 status=status.HTTP_403_FORBIDDEN)
         pet = get_object_or_404(Pet, id=pet_id)
         pet_data = request.data.copy()
+        if pet_data.get('status') == 'Withdrawn':
+            pet.status = 'Withdrawn'
         pet_data.pop('shelter', None)
         pet_data.pop('timestamp', None)
         serializer = PetSerializer(pet, data=pet_data, partial=True) 

@@ -37,12 +37,16 @@ class ApplicationCreateView(APIView):
                 forward_content_type=ContentType.objects.get_for_model(application),
                 forward_object_id=application.id
             )
+            
+            pet.status = 'Pending'
+            pet.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, application_id): 
         application = Application.objects.get(pk=application_id)
         new_status = request.data.get('status')
+        pet = application.pet
 
         if not new_status:
             return Response(
@@ -52,6 +56,8 @@ class ApplicationCreateView(APIView):
 
         if hasattr(request.user, 'petseeker') and request.user.petseeker == application.seeker:
             if application.status in ['Pending', 'Accepted'] and new_status == 'Withdrawn':
+                pet.status = 'Available'
+                pet.save()
                 application.status = new_status
                 application.save(update_fields=['status'])
                 self.create_notification(application, new_status)
@@ -59,6 +65,12 @@ class ApplicationCreateView(APIView):
 
         elif hasattr(request.user, 'petshelter') and request.user.petshelter == application.pet.shelter:
             if application.status == 'Pending' and new_status in ['Accepted', 'Denied']:
+                if new_status == 'Accepted':
+                    pet.status = 'Adopted'
+                    pet.save()
+                else:   
+                    pet.status = 'Available'
+                    pet.save()
                 application.status = new_status
                 application.save(update_fields=['status'])
                 self.create_notification(application, new_status)
