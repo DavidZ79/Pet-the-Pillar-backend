@@ -90,7 +90,8 @@ class ApplicationCreateView(APIView):
             user_object_id=receiver.id,
             content=notification_content,
             forward_content_type=ContentType.objects.get_for_model(application),
-            forward_object_id=application.id
+            forward_object_id=application.id,
+            forward_url=f"/applications/{application.id}"
         )
 
 

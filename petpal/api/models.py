@@ -68,6 +68,7 @@ class Notification (models.Model):
    # forward = models.ForeignKey(Pet, Application, Review)
    forward_content_type = models.ForeignKey(ContentType, related_name="forward",on_delete=models.CASCADE)
    forward_object_id = models.PositiveBigIntegerField()
+   forward_url = models.CharField(max_length=200, blank=True, null=True)
    forward = GenericForeignKey("forward_content_type", "forward_object_id")
 
    timestamp = models.DateTimeField(auto_now_add=True)
