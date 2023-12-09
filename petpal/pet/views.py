@@ -18,6 +18,7 @@ class ManagePetView(APIView):
                 status=status.HTTP_403_FORBIDDEN)
         
         pet_data = request.data.copy()
+        print(pet_data)
         pet_data.pop('shelter', None)
         pet_data.pop('timestamp', None)
         pet_data['status'] = 'Available'

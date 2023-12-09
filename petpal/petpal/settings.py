@@ -47,14 +47,17 @@ INSTALLED_APPS = [
     'comment',
     'application',
     'notification',
+    'corsheaders',
 ]
 
 AUTH_USER_MODEL = "api.BaseUser"
 LOGIN_REDIRECT_URL = '/admin/'
-
+CORS_ALLOW_ALL_ORIGINS = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware', 
+    'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     # turn this off (the autotester will also do this)

@@ -60,7 +60,8 @@ class loginUser(APIView):
             data = {
                 'refresh_token': str(refresh),
                 'access_token': access_token,
-                'user_id': user.id
+                'user_id': user.id,
+                'is_shelter': user.is_pet_shelter()
             }
             return Response(data)
         else:
