@@ -5,7 +5,7 @@ from api.models import BaseUser, PetSeeker, PetShelter
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = BaseUser
-        fields = ['id', 'username', 'email', 'password', 'phoneNumber', 'location']
+        fields = ['id', 'username', 'email', 'password', 'phoneNumber', 'location', 'picture']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
