@@ -25,8 +25,9 @@ class PetSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         photos_data = validated_data.pop('photos', [])
         instance = super().update(instance, validated_data)
-        instance.photos.clear()
-        for photo_data in photos_data:
-            photo = Photo.objects.create(**photo_data)
-            instance.photos.add(photo)
+        if photos_data is not None:
+            for photo_data in photos_data:
+                instance.photos.clear()
+                photo = Photo.objects.create(**photo_data)
+                instance.photos.add(photo)
         return instance
