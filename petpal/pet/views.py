@@ -7,9 +7,12 @@ from .serializers import PetSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import AllowAny
 
 class ManagePetView(APIView):
     parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [AllowAny]
+
     
     def post(self, request):
         if not BaseUser.is_pet_shelter(request.user):
@@ -77,6 +80,7 @@ class ListPetView(generics.ListAPIView):
     
 class SearchPetView(generics.ListAPIView):
     serializer_class = PetSerializer
+    permission_classes = [AllowAny]
     pagination_class = StandardResultsSetPagination
     filter_backends = [OrderingFilter]
     ordering = ["name"]
