@@ -176,7 +176,7 @@ class Chat (Comment):
 
 class Review (Comment):
    user_content_type = models.ForeignKey(ContentType, related_name="review_user", on_delete=models.CASCADE)
-
+   parent = models.ForeignKey('self', related_name='review_children',null=True,blank=True, on_delete=models.CASCADE)
    shelter = models.ForeignKey(PetShelter, related_name="review_shelter", on_delete=models.CASCADE)
 
 
@@ -192,7 +192,7 @@ class Blog (models.Model):
 
 class Discussion (Comment):
    user_content_type = models.ForeignKey(ContentType, related_name="blog_user", on_delete=models.CASCADE)
-
+   parent = models.ForeignKey('self',related_name='discussion_children',null=True,blank=True, on_delete=models.CASCADE)
    blog = models.ForeignKey(Blog, on_delete= models.CASCADE)
 
 class Ratings (models.Model):

@@ -9,7 +9,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied
 
 from .serializer import ChatSerializer, ReviewSerializer, DiscussionSerializer, RatingsSerializer, LikesSerializer
 
-from api.models import BaseUser, PetSeeker, PetShelter, Application, Blog, Chat, Review, Notification, Ratings, Likes
+from api.models import BaseUser, PetSeeker, PetShelter, Application, Blog, Chat, Review, Discussion, Notification, Ratings, Likes
 
 
 from datetime import datetime
@@ -137,14 +137,22 @@ class ReviewListAPI(ListAPIView):
 
     def get_queryset(self):
         shelter = get_object_or_404(PetShelter, pk=self.kwargs['shelter_id'])
-        return Review.objects.filter(shelter=shelter)
+        parent_id = self.kwargs['parent_id']
+        if parent_id == 0:
+            return Review.objects.filter(shelter=shelter, parent=None)
+        else:
+            return Review.objects.filter(shelter=shelter, parent=parent_id)
 
 class DiscussionListAPI(ListAPIView):
     serializer_class = DiscussionSerializer
 
     def get_queryset(self):
-        shelter = get_object_or_404(PetShelter, pk=self.kwargs['shelter_id'])
-        return Review.objects.filter(shelter=shelter)
+        blog = get_object_or_404(Blog, pk=self.kwargs['blog_id'])
+        parent_id = self.kwargs['parent_id']
+        if parent_id == 0:
+            return Discussion.objects.filter(blog=blog, parent=None)
+        else:
+            return Discussion.objects.filter(blog=blog, parent=parent_id)
 
 class RatingAPI(CreateAPIView, RetrieveAPIView, UpdateAPIView):
     permission_classes = [IsAuthenticated]

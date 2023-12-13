@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from rest_framework import status, generics
+from rest_framework.permissions import AllowAny
 from api.models import Pet, Photo, BaseUser
 from .serializers import PetSerializer
 from django.shortcuts import get_object_or_404
@@ -69,7 +70,7 @@ class ManagePetView(APIView):
             pet.photos.add(photo)
     
 class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 10
+    page_size = 4
 
 class ListPetView(generics.ListAPIView):
     queryset = Pet.objects.all()
@@ -79,7 +80,8 @@ class SearchPetView(generics.ListAPIView):
     serializer_class = PetSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [OrderingFilter]
-    ordering = ["name"]
+    permission_classes = [AllowAny]
+    ordering = ["timestamp"]
     ordering_fields = ['name', 'age', 'size', 'species', 'status', 'shelter__username']
 
     def get_queryset(self):
