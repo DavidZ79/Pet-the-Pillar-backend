@@ -6,6 +6,7 @@ from rest_framework.generics import CreateAPIView, RetrieveAPIView, ListAPIView,
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework import status
 
 from .serializer import ChatSerializer, ReviewSerializer, DiscussionSerializer, RatingsSerializer, LikesSerializer
 
@@ -164,6 +165,15 @@ class DiscussionListAPI(ListAPIView):
             return Discussion.objects.filter(blog=blog, parent=None)
         else:
             return Discussion.objects.filter(blog=blog, parent=parent_id)
+        
+class SingleDiscussionAPI(RetrieveAPIView):
+    queryset = Discussion.objects.all()
+    serializer_class = DiscussionSerializer
+    permission_classes = [AllowAny]
+
+    def get_object(self):
+        discussion_id = self.kwargs.get('discussion_id')
+        return get_object_or_404(Discussion, pk=discussion_id)
 
 class RatingAPI(CreateAPIView, RetrieveAPIView, UpdateAPIView):
     permission_classes = [IsAuthenticated]
@@ -275,8 +285,9 @@ class LikesAPI(CreateAPIView, RetrieveAPIView, DestroyAPIView):
 
     def get_queryset(self):
         return Likes.objects.all()
-
-    def perform_create(self, serializer):
+    
+    def post(self, request, **kwargs):
+        print("STARted post")
         try:
             user = PetSeeker.objects.get(pk=self.request.user)
         except PetSeeker.DoesNotExist:
@@ -287,12 +298,22 @@ class LikesAPI(CreateAPIView, RetrieveAPIView, DestroyAPIView):
         
         blog = get_object_or_404(Blog, pk=self.kwargs['blog_id'])
 
+        print("GOD BLOG")
         found = Likes.objects.filter(user_object_id=user.id, blog=blog)
-
+        print("FOUND SUSCESFUL??")
         if found:
-            raise PermissionDenied("Like already exists")
-        
-        likes = serializer.save(user=user, blog=blog)
+            return JsonResponse({'blog':0})
+        print("FOUND SUSCESFUL??")
+        serializer = self.serializer_class(data=request.data.copy())
+        print(serializer.is_valid())
+        if serializer.is_valid():
+            likes = self.serializer_class.create(self,validated_data=request.data.copy())
+            blog.num_likes += 1  # Increment the likes
+            blog.save()
+            return JsonResponse(likes.data)
+        print("die")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     def retrieve(self, request,**kwargs):
         try:
@@ -308,9 +329,12 @@ class LikesAPI(CreateAPIView, RetrieveAPIView, DestroyAPIView):
         found = Likes.objects.filter(user_object_id=user.id, blog=blog)
 
         if not found:
-            raise PermissionDenied("Like does not exist")
+            return JsonResponse({'blog':0})
         result = self.serializer_class(instance=found[0])
         return JsonResponse(result.data)
 
     def perform_destroy(self, instance):
+        blog = get_object_or_404(Blog, pk=self.kwargs['blog_id'])
+        blog.num_likes -= 1  # Increment the likes
+        blog.save()
         return super().perform_destroy(instance)

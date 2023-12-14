@@ -25,6 +25,7 @@ urlpatterns = [
     path('review/<int:shelter_id>/', views.ReviewAPI.as_view(), name="review_shelter_create"),
     path('review/<int:shelter_id>/list/<int:parent_id>/', views.ReviewListAPI.as_view(), name="review_shelter_list"),
     path('review/detail/<int:review_id>/', views.SingleReviewAPI.as_view(), name="single_review_detail"),
+    path('discussion/detail/<int:discussion_id>/', views.SingleDiscussionAPI.as_view(), name="single_discussion_detail"),
     path('discussion/<int:blog_id>/', views.DiscussionAPI.as_view(), name="discussion_blog_create"),
     path('discussion/<int:blog_id>/list/<int:parent_id>/', views.DiscussionListAPI.as_view(), name="discussion_blog_list"),
     path('rating/<int:shelter_id>/', views.RatingAPI.as_view(), name="rating_api"),
