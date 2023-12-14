@@ -10,6 +10,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied
 from .serializer import ChatSerializer, ReviewSerializer, DiscussionSerializer, RatingsSerializer, LikesSerializer
 
 from api.models import BaseUser, PetSeeker, PetShelter, Application, Blog, Chat, Review, Discussion, Notification, Ratings, Likes
+from rest_framework.permissions import AllowAny
 
 
 from datetime import datetime
@@ -134,6 +135,7 @@ class ChatListAPI(ListAPIView):
 
 class ReviewListAPI(ListAPIView):
     serializer_class = ReviewSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         shelter = get_object_or_404(PetShelter, pk=self.kwargs['shelter_id'])
@@ -142,6 +144,15 @@ class ReviewListAPI(ListAPIView):
             return Review.objects.filter(shelter=shelter, parent=None)
         else:
             return Review.objects.filter(shelter=shelter, parent=parent_id)
+        
+class SingleReviewAPI(RetrieveAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [AllowAny]
+
+    def get_object(self):
+        review_id = self.kwargs.get('review_id')
+        return get_object_or_404(Review, pk=review_id)
 
 class DiscussionListAPI(ListAPIView):
     serializer_class = DiscussionSerializer
@@ -159,6 +170,7 @@ class RatingAPI(CreateAPIView, RetrieveAPIView, UpdateAPIView):
     serializer_class = RatingsSerializer
     lookup_field = 'shelter'
     lookup_url_kwarg = 'shelter_id'
+    from rest_framework.permissions import AllowAny
 
     def get_queryset(self):
         return Ratings.objects.filter(user_object_id = self.request.user.id)

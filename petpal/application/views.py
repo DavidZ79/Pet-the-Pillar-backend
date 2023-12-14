@@ -106,12 +106,15 @@ class ApplicationCreateView(APIView):
             forward_url=f"/applications/{application.id}"
         )
 
+class StandardResultsSetPagination(PageNumberPagination):  # thanks Yahya
+    page_size = 4
 
 class ApplicationListView(ListAPIView):
     serializer_class = ApplicationSerializer
     filterset_fields = ['status']
     ordering_fields = ['timestamp', 'last_updated']
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -121,16 +124,22 @@ class ApplicationListView(ListAPIView):
         if status is not None:
             queryset = queryset.filter(status=status)
 
-        ordering = self.request.query_params.get('ordering')
-        if ordering is not None:
-            queryset = queryset.order_by(ordering)
+        ordering = 'timestamp'  # Descending order by default
+
+        # Check if ordering parameter is provided in query params
+        query_ordering = self.request.query_params.get('ordering')
+        if query_ordering is not None:
+            # Prepend hyphen for descending order if not already present
+            if not query_ordering.startswith('-'):
+                query_ordering = '-' + query_ordering
+            ordering = query_ordering
+
+        queryset = queryset.order_by(ordering)
 
         if hasattr(user, 'petshelter'):
-            return Application.objects.filter(pet__shelter=user.petshelter)
+            return queryset.filter(pet__shelter=user.petshelter)
         elif hasattr(user, 'petseeker'):
-            return Application.objects.filter(seeker=user.petseeker)
+            return queryset.filter(seeker=user.petseeker)
         else:
             return Application.objects.none()
 
-class StandardResultsSetPagination(PageNumberPagination):  # thanks Yahya
-    page_size = 10

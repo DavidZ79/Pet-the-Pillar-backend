@@ -76,7 +76,7 @@ class Notification (models.Model):
    content = models.CharField(max_length=2000)
    
    class Meta:
-        ordering = ['timestamp']
+        ordering = ['-timestamp']
         indexes = [
             models.Index(fields=["forward_content_type", "forward_object_id"]),
             models.Index(fields=["user_content_type", "user_object_id"]),

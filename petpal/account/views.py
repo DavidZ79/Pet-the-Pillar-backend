@@ -11,6 +11,7 @@ from django.contrib.auth import authenticate
 from django.views.generic.edit import View
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
+from rest_framework.pagination import PageNumberPagination
 from django.contrib.contenttypes.models import ContentType
 import pdb
 
@@ -66,11 +67,15 @@ class loginUser(APIView):
             return Response(data)
         else:
             return Response({'error': 'Invalid credentials'}, status=400)
+        
+class StandardResultsSetPagination(PageNumberPagination):  # thanks Yahya
+    page_size = 4
 
 class AllShelterListView(generics.ListAPIView):
     queryset = PetShelter.objects.all()
     serializer_class = ShelterSerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = StandardResultsSetPagination
 
 class SeekerProfileView (generics.RetrieveDestroyAPIView):
     queryset = PetSeeker.objects.all()

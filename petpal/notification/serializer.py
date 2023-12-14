@@ -1,7 +1,7 @@
 from rest_framework.serializers import ModelSerializer, RelatedField, HyperlinkedRelatedField, ValidationError
 from django.http import Http404
 from rest_framework.reverse import reverse
-BASE = "http://127.0.0.1:8000/"
+BASE = "http://127.0.0.1:3000/"
 
 from api.models import Notification, Pet, Application, Review, Chat, Discussion
 from api.serializers import UserRelatedField
@@ -17,17 +17,17 @@ class NotificationForwardRelatedField(HyperlinkedRelatedField):
         print("REPRESENTING")
         print(self.context)
         if isinstance(value, Pet):
-            return f'PetId({value.id})'
+            return f'{BASE}pet_detail/{value.id}'
             # return reverse('create-pet', request=self.context['request'])
             # return reverse('notification_list', kwargs={'pk':value.id})
         elif isinstance(value, Application):
-            return f'ApplicationId({value.id})'
+            return f'{BASE}pet_application/{value.id}'
         elif isinstance(value, Discussion):
             return f'DiscussionId({value.id})'
         elif isinstance(value, Review):
-            return f'ReviewID({value.id})'
+            return f'{BASE}shelter/{value.shelter.id}'
         elif isinstance(value, Chat):
-            return f'ChatID({value.id}), URL: {BASE}api/comment/chat/{value.id}/list/'
+            return f'{BASE}pet_application/{value.application.id}'
         # try:
         #     user = Pet.objects.get(pk=value.id)
         #     return 'Seeker: ' + value.id
