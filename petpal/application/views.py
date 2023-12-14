@@ -81,6 +81,18 @@ class ApplicationCreateView(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    def get(self, request, application_id):
+        application = Application.objects.get(pk=application_id)
+        pet = application.pet
+        if not (hasattr(request.user, 'petshelter') and request.user.petshelter == application.pet.shelter) and not (hasattr(request.user, 'petseeker') and request.user.petseeker == application.seeker):
+            return Response(
+                {"error": "You are not authorized to view this application."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        application = Application.objects.get(pk=application_id)
+        serializer = ApplicationSerializer(application)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
     def create_notification(self, application, new_status):
         notification_content = f"Application status updated to {new_status}"
         receiver = application.seeker

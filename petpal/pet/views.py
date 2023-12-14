@@ -76,8 +76,12 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size = 4
 
 class ListPetView(generics.ListAPIView):
-    queryset = Pet.objects.all()
     serializer_class = PetSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        return Pet.objects.filter(shelter=user)
     
 class SearchPetView(generics.ListAPIView):
     serializer_class = PetSerializer

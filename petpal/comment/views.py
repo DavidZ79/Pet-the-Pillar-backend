@@ -130,7 +130,7 @@ class ChatListAPI(ListAPIView):
         if application.seeker.id != user.id and application.pet.shelter.id != user.id:
             raise Http404('Invalid Access')
         
-        return Chat.objects.filter(application=application)
+        return Chat.objects.filter(application=application).order_by('timestamp')
 
 class ReviewListAPI(ListAPIView):
     serializer_class = ReviewSerializer
