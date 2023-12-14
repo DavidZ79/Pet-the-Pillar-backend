@@ -287,6 +287,7 @@ class LikesAPI(CreateAPIView, RetrieveAPIView, DestroyAPIView):
         return Likes.objects.all()
     
     def post(self, request, **kwargs):
+        print("STARted post")
         try:
             user = PetSeeker.objects.get(pk=self.request.user)
         except PetSeeker.DoesNotExist:
@@ -297,9 +298,12 @@ class LikesAPI(CreateAPIView, RetrieveAPIView, DestroyAPIView):
         
         blog = get_object_or_404(Blog, pk=self.kwargs['blog_id'])
 
+        print("GOD BLOG")
         found = Likes.objects.filter(user_object_id=user.id, blog=blog)
+        print("FOUND SUSCESFUL??")
         if found:
             return JsonResponse({'blog':0})
+        print("FOUND SUSCESFUL??")
         serializer = self.serializer_class(data=request.data.copy())
         print(serializer.is_valid())
         if serializer.is_valid():
