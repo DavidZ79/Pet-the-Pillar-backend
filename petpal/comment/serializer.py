@@ -111,13 +111,14 @@ class LikesSerializer(ModelSerializer):
     
     def create(self, validated_data):
         # Get the content type for the user model
-        user_content_type = ContentType.objects.get_for_model(self.context['request'].user)
+        print(self.__dict__)
+        user_content_type = ContentType.objects.get_for_model(self.request.user)
 
         # Create the rating instance
         likes = Likes.objects.create(
             blog = validated_data['blog'],
             user_content_type=user_content_type,
-            user_object_id=self.context['request'].user.pk,
+            user_object_id=self.request.user.pk,
         )
 
         return likes
