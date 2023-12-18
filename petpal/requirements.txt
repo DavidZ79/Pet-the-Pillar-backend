@@ -1,0 +1,5 @@
+Django==3.2.5  # or your specific version
+djangorestframework==3.12.4  # or your specific version
+djangorestframework-simplejwt==4.6.0  # example version
+django-cors-headers==3.7.0  # example version
+Pillow==8.2.0  # example version
